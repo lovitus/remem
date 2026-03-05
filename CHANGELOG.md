@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.1 - 2026-03-05
+
+- Log system redesigned with categories:
+  - Routine scan logs are rolling (default 100 lines)
+  - Important logs are separate and retained in memory, including all kill events
+- Log page redesigned to show categorized logs clearly.
+- Rules editor redesigned for usability:
+  - shows default rules and current effective rules
+  - clearer guidance and examples
+  - supports one-click clear of custom patch
+- Rules API now returns default/effective/env/custom context for better UI clarity.
+
 ## v0.3.0 - 2026-03-05
 
 - Added tray `Edit Rules` entry with web editor.

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -92,7 +93,7 @@ func Default() Config {
 		GroupLimitBytes:       groupLimit,
 		CommandWatchlist:      commands,
 		Groups:                groups,
-		MaxInMemoryLogLines:   intFromEnv("REMEM_MAX_LOG_LINES", 400),
+		MaxInMemoryLogLines:   intFromEnv("REMEM_MAX_LOG_LINES", 100),
 		LogHTTPListenAddress:  envOrDefault("REMEM_LOG_HTTP_ADDR", "127.0.0.1:0"),
 		ConfigPath:            configPath,
 		Warnings:              warnings,
@@ -191,6 +192,16 @@ func defaultCommandWatchlistBase() map[string]struct{} {
 	return m
 }
 
+func DefaultCommandNames() []string {
+	m := defaultCommandWatchlistBase()
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}
+
 func defaultGroups() []GroupSpec {
 	return []GroupSpec{
 		{
@@ -238,6 +249,16 @@ func defaultGroups() []GroupSpec {
 			ProtectMatchers: []Matcher{{NameEquals: []string{"safari"}}},
 		},
 	}
+}
+
+func DefaultGroupNames() []string {
+	g := defaultGroups()
+	out := make([]string, 0, len(g))
+	for _, it := range g {
+		out = append(out, it.Name)
+	}
+	sort.Strings(out)
+	return out
 }
 
 func applyCommandPatch(dst map[string]struct{}, add, remove []string) {

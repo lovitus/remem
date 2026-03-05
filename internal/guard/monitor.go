@@ -25,10 +25,13 @@ type Stats struct {
 }
 
 type RuleState struct {
-	ConfigPath   string            `json:"configPath"`
-	CustomPatch  config.FileConfig `json:"customPatch"`
-	CommandCount int               `json:"commandCount"`
-	GroupNames   []string          `json:"groupNames"`
+	ConfigPath        string            `json:"configPath"`
+	EnvPatch          config.FileConfig `json:"envPatch"`
+	CustomPatch       config.FileConfig `json:"customPatch"`
+	DefaultCommands   []string          `json:"defaultCommands"`
+	DefaultGroups     []string          `json:"defaultGroups"`
+	EffectiveCommands []string          `json:"effectiveCommands"`
+	EffectiveGroups   []string          `json:"effectiveGroups"`
 }
 
 type Monitor struct {
@@ -97,7 +100,7 @@ func (m *Monitor) TriggerScan(source string) {
 	select {
 	case m.triggerCh <- source:
 	default:
-		m.logs.Addf("scan request dropped (%s): queue full", source)
+		m.logs.AddRoutinef("scan request dropped (%s): queue full", source)
 	}
 }
 
@@ -117,9 +120,9 @@ func (m *Monitor) UpdateCustomPatch(patch config.FileConfig, persist bool) error
 	m.hotGroups = make(map[string]time.Time)
 	m.rulesMu.Unlock()
 
-	m.logs.Addf("rules updated: commands=%d groups=%d", len(commands), len(groups))
+	m.logs.AddActionf("rules updated: commands=%d groups=%d", len(commands), len(groups))
 	if persist && m.cfg.ConfigPath != "" {
-		m.logs.Addf("rules persisted: %s", m.cfg.ConfigPath)
+		m.logs.AddActionf("rules persisted: %s", m.cfg.ConfigPath)
 	}
 	return nil
 }
@@ -127,16 +130,25 @@ func (m *Monitor) UpdateCustomPatch(patch config.FileConfig, persist bool) error
 func (m *Monitor) RuleState() RuleState {
 	m.rulesMu.RLock()
 	defer m.rulesMu.RUnlock()
-	names := make([]string, 0, len(m.groups))
+	groupNames := make([]string, 0, len(m.groups))
 	for _, g := range m.groups {
-		names = append(names, g.Name)
+		groupNames = append(groupNames, g.Name)
 	}
-	sort.Strings(names)
+	sort.Strings(groupNames)
+
+	commands := make([]string, 0, len(m.commandWatchlist))
+	for k := range m.commandWatchlist {
+		commands = append(commands, k)
+	}
+	sort.Strings(commands)
 	return RuleState{
-		ConfigPath:   m.cfg.ConfigPath,
-		CustomPatch:  m.customPatch,
-		CommandCount: len(m.commandWatchlist),
-		GroupNames:   names,
+		ConfigPath:        m.cfg.ConfigPath,
+		EnvPatch:          m.cfg.EnvPatch,
+		CustomPatch:       m.customPatch,
+		DefaultCommands:   config.DefaultCommandNames(),
+		DefaultGroups:     config.DefaultGroupNames(),
+		EffectiveCommands: commands,
+		EffectiveGroups:   groupNames,
 	}
 }
 
@@ -152,7 +164,7 @@ func (m *Monitor) scan(source string) {
 
 	procs, byPID, children, err := snapshotProcesses(commands, groupsToScan)
 	if err != nil {
-		m.logs.Addf("scan error (%s): %v", source, err)
+		m.logs.AddErrorf("scan error (%s): %v", source, err)
 		m.updateStats(start, source, 0, 0, fmt.Sprintf("scan error: %v", err))
 		return
 	}
@@ -200,7 +212,7 @@ func (m *Monitor) scan(source string) {
 
 		candidate, ok := largestKillableChild(g, roots, members)
 		if !ok {
-			m.logs.Addf("group cap hit but no kill candidate: group=%s total=%s", g.Name, formatGiB(total))
+			m.logs.AddErrorf("group cap hit but no kill candidate: group=%s total=%s", g.Name, formatGiB(total))
 			continue
 		}
 
@@ -212,7 +224,7 @@ func (m *Monitor) scan(source string) {
 
 	dur := time.Since(start)
 	summary := fmt.Sprintf("scan ok (%s): procs=%d groups=%d killed=%d duration=%s", source, len(procs), len(groupsToScan), killed, dur.Truncate(time.Millisecond))
-	m.logs.Add(summary)
+	m.logs.AddRoutine(summary)
 	m.updateStats(start, source, len(procs), killed, summary)
 }
 
@@ -367,15 +379,15 @@ func (m *Monitor) killPID(pid int32, reason string, killedPIDs map[int32]struct{
 
 	p, err := process.NewProcess(pid)
 	if err != nil {
-		m.logs.Addf("kill skipped pid=%d: cannot open process (%v)", pid, err)
+		m.logs.AddErrorf("kill skipped pid=%d: cannot open process (%v)", pid, err)
 		return false
 	}
 	if err := p.Kill(); err != nil {
-		m.logs.Addf("kill failed pid=%d: %v", pid, err)
+		m.logs.AddErrorf("kill failed pid=%d: %v", pid, err)
 		return false
 	}
 	killedPIDs[pid] = struct{}{}
-	m.logs.Addf("killed pid=%d: %s", pid, reason)
+	m.logs.AddKillf("killed pid=%d: %s", pid, reason)
 	return true
 }
 

@@ -56,20 +56,20 @@ func onReady(opts TrayOptions) {
 		for {
 			select {
 			case <-mOpenLog.ClickedCh:
-				opts.Logs.Addf("open log viewer: %s", opts.LogUIURL)
+				opts.Logs.AddActionf("open log viewer: %s", opts.LogUIURL)
 				if err := openBrowser(opts.LogUIURL); err != nil {
-					opts.Logs.Addf("open browser failed: %v", err)
+					opts.Logs.AddErrorf("open browser failed: %v", err)
 				}
 			case <-mEditRules.ClickedCh:
-				opts.Logs.Addf("open rules editor: %s", opts.RulesURL)
+				opts.Logs.AddActionf("open rules editor: %s", opts.RulesURL)
 				if err := openBrowser(opts.RulesURL); err != nil {
-					opts.Logs.Addf("open browser failed: %v", err)
+					opts.Logs.AddErrorf("open browser failed: %v", err)
 				}
 			case <-mForceScan.ClickedCh:
-				opts.Logs.Add("manual scan requested")
+				opts.Logs.AddActionf("manual scan requested")
 				opts.Monitor.TriggerScan("manual")
 			case <-mQuit.ClickedCh:
-				opts.Logs.Add("tray quit requested")
+				opts.Logs.AddActionf("tray quit requested")
 				systray.Quit()
 				return
 			}

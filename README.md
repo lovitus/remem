@@ -33,7 +33,9 @@ Cross-platform memory guard for macOS and Windows.
 
 - 托盘菜单：`Open Live Logs`, `Edit Rules`, `Force Scan Now`, `Quit`
 - `Edit Rules` 保存后立即生效，并持久化到规则文件。
-- 日志只在内存环形缓冲区中保存，不写盘。
+- 日志只在内存中保存，不写盘：
+  - `Routine Scan Logs` 仅保留最近 100 行（可通过 `REMEM_MAX_LOG_LINES` 调整）
+  - `Important Logs`（action/error/kill）单独保留，杀进程事件不会被 routine 日志冲掉
 
 ## 快速开始
 
@@ -67,7 +69,7 @@ bash ./scripts/release.sh v0.3.0
 - `REMEM_GROUPS_PER_SCAN`：每轮扫描的组数（默认 macOS `0=全部`，Windows `2`）
 - `REMEM_GROUP_HOT_RATIO`：热组阈值比例（默认 `0.70`）
 - `REMEM_GROUP_HOT_TTL_SEC`：热组持续提频时长（默认 `30`）
-- `REMEM_MAX_LOG_LINES`：内存日志行数（默认 `400`）
+- `REMEM_MAX_LOG_LINES`：Routine 日志行数（默认 `100`）
 - `REMEM_LOG_HTTP_ADDR`：日志 HTTP 监听地址（默认 `127.0.0.1:0`）
 - `REMEM_SHOW_CONSOLE`：Windows 设为 `1` 可保留控制台
 
