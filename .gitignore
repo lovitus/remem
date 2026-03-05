@@ -1,0 +1,21 @@
+# Binaries
+remem-guard
+remem-guard.exe
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Build outputs
+dist/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Go
+coverage.out
