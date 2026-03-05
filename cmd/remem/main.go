@@ -19,10 +19,10 @@ func main() {
 	hideConsoleWindowIfNeeded()
 
 	cfg := config.Default()
-	logs := logbuf.New(cfg.MaxInMemoryLogLines)
+	logs := logbuf.New(cfg.RoutineLogLines, cfg.ImportantLogLines)
 	logs.AddActionf("remem guard starting")
 	logs.AddActionf("version=%s scan interval=%s command_limit=%s group_limit=%s", version, cfg.ScanInterval, bytesText(cfg.CommandLimitBytes), bytesText(cfg.GroupLimitBytes))
-	logs.AddActionf("watchlist=%d groups=%d groups_per_scan=%d hot_ratio=%.2f hot_ttl=%s", len(cfg.CommandWatchlist), len(cfg.Groups), cfg.GroupsPerScan, cfg.GroupHotThresholdRate, cfg.GroupHotTTL)
+	logs.AddActionf("watchlist=%d groups=%d groups_per_scan=%d hot_ratio=%.2f hot_ttl=%s routine_logs=%d important_logs=%d", len(cfg.CommandWatchlist), len(cfg.Groups), cfg.GroupsPerScan, cfg.GroupHotThresholdRate, cfg.GroupHotTTL, cfg.RoutineLogLines, cfg.ImportantLogLines)
 	if cfg.ConfigPath != "" {
 		logs.AddActionf("config file: %s", cfg.ConfigPath)
 	}

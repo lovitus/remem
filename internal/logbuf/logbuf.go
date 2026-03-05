@@ -29,16 +29,25 @@ type Snapshot struct {
 type Buffer struct {
 	mu sync.RWMutex
 
-	routineMax int
-	routine    []Entry
-	important  []Entry
+	routineMax   int
+	importantMax int
+	routine      []Entry
+	important    []Entry
 }
 
-func New(routineMaxLines int) *Buffer {
+func New(routineMaxLines, importantMaxLines int) *Buffer {
 	if routineMaxLines <= 0 {
-		routineMaxLines = 100
+		routineMaxLines = 10
 	}
-	return &Buffer{routineMax: routineMaxLines, routine: make([]Entry, 0, routineMaxLines), important: make([]Entry, 0, 64)}
+	if importantMaxLines <= 0 {
+		importantMaxLines = 100
+	}
+	return &Buffer{
+		routineMax:   routineMaxLines,
+		importantMax: importantMaxLines,
+		routine:      make([]Entry, 0, routineMaxLines),
+		important:    make([]Entry, 0, importantMaxLines),
+	}
 }
 
 // Add/Addf are backward-compatible and treated as routine logs.
@@ -82,6 +91,9 @@ func (b *Buffer) addImportant(kind Kind, message string) {
 	defer b.mu.Unlock()
 	entry := Entry{Time: time.Now().Format("15:04:05"), Kind: kind, Message: message}
 	b.important = append(b.important, entry)
+	if len(b.important) > b.importantMax {
+		b.important = append([]Entry(nil), b.important[len(b.important)-b.importantMax:]...)
+	}
 }
 
 func (b *Buffer) SnapshotByCategory() Snapshot {

@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.2 - 2026-03-05
+
+- Routine log retention set to 10 lines by default.
+- Important log retention set to 100 lines by default, including kill events.
+- Rules editor UI redesigned to be more usable:
+  - row-based editable lists with `-` remove buttons
+  - auto trailing empty row
+  - green check marker for non-empty row values
+  - explicit `恢复默认` action
+  - clear visual status for default/effective command and group rules
+- Save still applies immediately via hot reload.
+
 ## v0.3.1 - 2026-03-05
 
 - Log system redesigned with categories:

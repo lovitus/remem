@@ -141,11 +141,11 @@ const indexHTML = `<!doctype html>
   <div class="meta"><a href="/rules">Open Rules Editor</a></div>
   <div class="wrap">
     <div class="card">
-      <div class="title">Important Logs (action/error/kill, persistent in memory)</div>
+      <div class="title">Important Logs (action/error/kill, rolling 100 lines)</div>
       <div class="logs" id="imp">loading...</div>
     </div>
     <div class="card">
-      <div class="title">Routine Scan Logs (rolling 100 lines)</div>
+      <div class="title">Routine Scan Logs (rolling 10 lines)</div>
       <div class="logs" id="rt">loading...</div>
     </div>
   </div>
@@ -186,122 +186,217 @@ const rulesHTML = `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>remem rules editor</title>
 <style>
-  body { font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; background: #10141a; color: #eef3fb; }
-  h1 { margin: 0 0 8px 0; font-size: 20px; }
-  .muted { color: #9db0c5; font-size: 13px; margin: 6px 0; }
-  .help { background: #162030; border: 1px solid #29425d; border-radius: 8px; padding: 10px; margin: 10px 0; font-size: 13px; color: #c6d7ea; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .card { background: #1a2230; border: 1px solid #2e3a4d; border-radius: 8px; padding: 10px; }
-  .card h3 { margin: 0 0 8px 0; font-size: 14px; color: #d8e6f7; }
-  textarea { width: 100%; min-height: 120px; resize: vertical; background: #131a25; color: #eef3fb; border: 1px solid #2e3a4d; border-radius: 8px; padding: 8px; font-family: ui-monospace, Menlo, monospace; }
-  .list { background: #131a25; border: 1px solid #2e3a4d; border-radius: 8px; padding: 8px; min-height: 100px; max-height: 200px; overflow: auto; font-family: ui-monospace, Menlo, monospace; font-size: 12px; white-space: pre-wrap; }
-  button { margin-top: 10px; margin-right: 8px; background: #1f9d67; border: 0; color: #fff; padding: 9px 12px; border-radius: 8px; cursor: pointer; }
-  .secondary { background: #6b7280; }
-  .status { margin-top: 10px; color: #9db0c5; }
-  a { color: #8fd3ff; }
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel2: #11161d;
+    --line: #2a3442;
+    --text: #e6edf3;
+    --muted: #9baec4;
+    --ok: #30c262;
+    --warn: #ffcc66;
+    --btn: #1f9d67;
+    --btn2: #6b7280;
+    --danger: #d9534f;
+  }
+  body { margin:0; background:var(--bg); color:var(--text); font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .page { max-width: 1100px; margin: 18px auto; padding: 0 14px 24px; }
+  h1 { font-size: 22px; margin: 0 0 10px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .hint { margin-top:10px; background:#132033; border:1px solid #2f4b69; border-radius:10px; padding:10px 12px; line-height:1.5; }
+  .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px; }
+  .card h3 { margin:0 0 8px; font-size:14px; }
+  .list { background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size:12px; min-height:120px; max-height:220px; overflow:auto; white-space:pre-wrap; }
+  .editor { margin-top:12px; }
+  .editor h2 { margin: 0 0 8px; font-size:16px; }
+  .rows { display:flex; flex-direction:column; gap:6px; }
+  .row { display:grid; grid-template-columns: 26px 1fr 34px; gap:6px; align-items:center; }
+  .status-dot { width:22px; text-align:center; color:#7f8ea3; font-weight:600; }
+  .status-dot.ok { color: var(--ok); }
+  input[type=text] { width:100%; box-sizing:border-box; background:var(--panel2); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:8px 10px; font-size:13px; }
+  .minus { height:32px; border-radius:8px; border:1px solid #54343d; background:#2c1d22; color:#ffb3ba; cursor:pointer; }
+  .minus:disabled { opacity:0.35; cursor:not-allowed; }
+  .ops { margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
+  .btn { border:0; border-radius:9px; padding:9px 14px; color:#fff; cursor:pointer; }
+  .save { background: var(--btn); }
+  .reset { background: var(--btn2); }
+  .restore { background: var(--danger); }
+  .state { margin-top:10px; color:var(--muted); font-size:13px; }
+  a { color:#8fd3ff; }
+  @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
+<div class="page">
   <h1>Rules Editor</h1>
   <div class="muted" id="meta"></div>
-  <div class="help">
-    你只需要维护“自定义增删补丁”。默认规则始终存在。<br/>
-    1) 在 Add 里写要新增的命令/程序名（每行一个）<br/>
-    2) 在 Remove 里写要从默认规则里移除的名称（每行一个）<br/>
-    3) 点击 Save And Apply Now，立即生效
+  <div class="hint">
+    操作方式：在每个列表里直接输入；有内容时左侧会显示绿色 ✓；末尾永远保留一个空行。<br/>
+    点 <b>Save And Apply Now</b> 立即热加载生效。<br/>
+    点 <b>恢复默认</b> 会清空所有自定义增删补丁，只保留默认规则。
   </div>
 
-  <div class="grid">
+  <div class="grid2">
+    <div class="card"><h3>Default Commands</h3><div class="list" id="defaultCommands"></div></div>
+    <div class="card"><h3>Effective Commands (当前生效)</h3><div class="list" id="effectiveCommands"></div></div>
+    <div class="card"><h3>Default Groups</h3><div class="list" id="defaultGroups"></div></div>
+    <div class="card"><h3>Effective Groups (当前生效)</h3><div class="list" id="effectiveGroups"></div></div>
+  </div>
+
+  <div class="grid2 editor">
     <div class="card">
-      <h3>Default Commands</h3>
-      <div class="list" id="defaultCommands"></div>
+      <h2>Commands Add</h2>
+      <div class="rows" id="cmdAddRows"></div>
     </div>
     <div class="card">
-      <h3>Effective Commands</h3>
-      <div class="list" id="effectiveCommands"></div>
+      <h2>Commands Remove</h2>
+      <div class="rows" id="cmdRemoveRows"></div>
     </div>
     <div class="card">
-      <h3>Default Groups</h3>
-      <div class="list" id="defaultGroups"></div>
+      <h2>Groups Add</h2>
+      <div class="rows" id="grpAddRows"></div>
     </div>
     <div class="card">
-      <h3>Effective Groups</h3>
-      <div class="list" id="effectiveGroups"></div>
+      <h2>Groups Remove</h2>
+      <div class="rows" id="grpRemoveRows"></div>
     </div>
   </div>
 
-  <div class="grid" style="margin-top:12px;">
-    <div class="card"><h3>Custom: Commands Add</h3><textarea id="cmdAdd" placeholder="例如:\nbun\ndeno"></textarea></div>
-    <div class="card"><h3>Custom: Commands Remove</h3><textarea id="cmdRemove" placeholder="例如:\nless"></textarea></div>
-    <div class="card"><h3>Custom: Groups Add</h3><textarea id="grpAdd" placeholder="例如:\nbrave\nopera"></textarea></div>
-    <div class="card"><h3>Custom: Groups Remove</h3><textarea id="grpRemove" placeholder="例如:\nsafari"></textarea></div>
+  <div class="ops">
+    <button class="btn save" id="saveBtn">Save And Apply Now</button>
+    <button class="btn reset" id="clearBtn">清空自定义补丁</button>
+    <button class="btn restore" id="restoreBtn">恢复默认</button>
   </div>
-
-  <button id="saveBtn">Save And Apply Now</button>
-  <button class="secondary" id="resetBtn">Clear Custom Patch</button>
-  <div class="status" id="status"></div>
-  <div class="status"><a href="/">Back to logs</a></div>
+  <div class="state" id="status"></div>
+  <div class="state"><a href="/">Back to logs</a></div>
+</div>
 
 <script>
-function toLines(a){ return (a||[]).join('\n'); }
-function fromLines(s){ return s.split(/\r?\n/).map(v=>v.trim()).filter(Boolean); }
-function showList(id, arr){ document.getElementById(id).textContent = (arr||[]).join('\n'); }
+function uniq(arr){ const s=new Set(); const out=[]; for(const x of arr){ const v=(x||'').trim(); if(!v) continue; if(!s.has(v)){s.add(v); out.push(v);} } return out; }
+function listText(arr){ return (arr||[]).join('\n'); }
 
-let lastState = null;
+const editors = {
+  cmdAdd: [], cmdRemove: [], grpAdd: [], grpRemove: []
+};
+
+function ensureTrailingEmpty(key) {
+  let vals = editors[key] || [];
+  vals = vals.map(v => (v||'').trim());
+  while (vals.length > 1 && vals[vals.length-1] === '' && vals[vals.length-2] === '') vals.pop();
+  if (vals.length === 0 || vals[vals.length-1] !== '') vals.push('');
+  editors[key] = vals;
+}
+
+function renderRows(key, containerId) {
+  ensureTrailingEmpty(key);
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const vals = editors[key];
+  vals.forEach((val, idx) => {
+    const row = document.createElement('div');
+    row.className = 'row';
+
+    const mark = document.createElement('div');
+    mark.className = 'status-dot' + (val.trim() ? ' ok' : '');
+    mark.textContent = val.trim() ? '✓' : '○';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = val;
+    input.placeholder = '输入名称';
+    input.oninput = () => {
+      editors[key][idx] = input.value;
+      renderAllEditors();
+    };
+
+    const minus = document.createElement('button');
+    minus.className = 'minus';
+    minus.textContent = '−';
+    minus.disabled = vals.length <= 1;
+    minus.onclick = () => {
+      editors[key].splice(idx, 1);
+      renderAllEditors();
+    };
+
+    row.appendChild(mark);
+    row.appendChild(input);
+    row.appendChild(minus);
+    container.appendChild(row);
+  });
+}
+
+function renderAllEditors() {
+  renderRows('cmdAdd', 'cmdAddRows');
+  renderRows('cmdRemove', 'cmdRemoveRows');
+  renderRows('grpAdd', 'grpAddRows');
+  renderRows('grpRemove', 'grpRemoveRows');
+}
+
+function currentPatchPayload() {
+  return {
+    commands: {
+      add: uniq(editors.cmdAdd),
+      remove: uniq(editors.cmdRemove),
+    },
+    groups: {
+      add: uniq(editors.grpAdd),
+      remove: uniq(editors.grpRemove),
+    },
+  };
+}
+
+function applyPatchToEditors(p) {
+  editors.cmdAdd = ((p.commands||{}).add || []).slice();
+  editors.cmdRemove = ((p.commands||{}).remove || []).slice();
+  editors.grpAdd = ((p.groups||{}).add || []).slice();
+  editors.grpRemove = ((p.groups||{}).remove || []).slice();
+  renderAllEditors();
+}
 
 async function loadRules() {
   const res = await fetch('/api/rules', {cache:'no-store'});
   const data = await res.json();
-  lastState = data;
+
   const cfgPath = data.configPath || '(not set)';
   document.getElementById('meta').textContent = 'config file: ' + cfgPath;
 
-  showList('defaultCommands', data.defaultCommands || []);
-  showList('effectiveCommands', data.effectiveCommands || []);
-  showList('defaultGroups', data.defaultGroups || []);
-  showList('effectiveGroups', data.effectiveGroups || []);
+  document.getElementById('defaultCommands').textContent = listText(data.defaultCommands || []);
+  document.getElementById('effectiveCommands').textContent = listText(data.effectiveCommands || []);
+  document.getElementById('defaultGroups').textContent = listText(data.defaultGroups || []);
+  document.getElementById('effectiveGroups').textContent = listText(data.effectiveGroups || []);
 
-  const p = data.customPatch || {};
-  document.getElementById('cmdAdd').value = toLines((p.commands||{}).add);
-  document.getElementById('cmdRemove').value = toLines((p.commands||{}).remove);
-  document.getElementById('grpAdd').value = toLines((p.groups||{}).add);
-  document.getElementById('grpRemove').value = toLines((p.groups||{}).remove);
+  applyPatchToEditors(data.customPatch || {commands:{add:[],remove:[]},groups:{add:[],remove:[]}});
 }
 
-async function saveRules(payload) {
+async function savePatch(patch, label) {
   const res = await fetch('/api/rules', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(payload)
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(patch)
   });
   if (!res.ok) {
-    document.getElementById('status').textContent = 'save failed: ' + await res.text();
+    document.getElementById('status').textContent = '保存失败: ' + await res.text();
     return;
   }
-  document.getElementById('status').textContent = 'saved and applied at ' + new Date().toLocaleTimeString();
+  document.getElementById('status').textContent = label + '，已立即生效: ' + new Date().toLocaleTimeString();
   await loadRules();
 }
 
-document.getElementById('saveBtn').addEventListener('click', async () => {
-  const payload = {
-    commands: {
-      add: fromLines(document.getElementById('cmdAdd').value),
-      remove: fromLines(document.getElementById('cmdRemove').value)
-    },
-    groups: {
-      add: fromLines(document.getElementById('grpAdd').value),
-      remove: fromLines(document.getElementById('grpRemove').value)
-    }
-  };
-  await saveRules(payload);
-});
+document.getElementById('saveBtn').onclick = async () => {
+  await savePatch(currentPatchPayload(), '规则已保存');
+};
 
-document.getElementById('resetBtn').addEventListener('click', async () => {
-  await saveRules({commands:{add:[],remove:[]}, groups:{add:[],remove:[]}});
-});
+document.getElementById('clearBtn').onclick = async () => {
+  await savePatch({commands:{add:[],remove:[]}, groups:{add:[],remove:[]}}, '自定义补丁已清空');
+};
+
+document.getElementById('restoreBtn').onclick = async () => {
+  await savePatch({commands:{add:[],remove:[]}, groups:{add:[],remove:[]}}, '已恢复默认规则');
+};
 
 loadRules().catch(e => {
-  document.getElementById('status').textContent = 'load failed: ' + e;
+  document.getElementById('status').textContent = '加载失败: ' + e;
 });
 </script>
 </body>

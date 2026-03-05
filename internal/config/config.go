@@ -40,7 +40,8 @@ type Config struct {
 	GroupLimitBytes      uint64
 	CommandWatchlist     map[string]struct{}
 	Groups               []GroupSpec
-	MaxInMemoryLogLines  int
+	RoutineLogLines      int
+	ImportantLogLines    int
 	LogHTTPListenAddress string
 	ConfigPath           string
 	Warnings             []string
@@ -93,7 +94,8 @@ func Default() Config {
 		GroupLimitBytes:       groupLimit,
 		CommandWatchlist:      commands,
 		Groups:                groups,
-		MaxInMemoryLogLines:   intFromEnv("REMEM_MAX_LOG_LINES", 100),
+		RoutineLogLines:       intFromEnv("REMEM_ROUTINE_LOG_LINES", 10),
+		ImportantLogLines:     intFromEnv("REMEM_IMPORTANT_LOG_LINES", 100),
 		LogHTTPListenAddress:  envOrDefault("REMEM_LOG_HTTP_ADDR", "127.0.0.1:0"),
 		ConfigPath:            configPath,
 		Warnings:              warnings,
