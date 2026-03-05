@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.3.3 - 2026-03-05
+
+- Rules editor interaction redesigned around direct editing of final effective rules:
+  - users edit only two lists (commands/groups), no Add/Remove mental model exposed
+  - per-row `-` remove action retained
+  - trailing empty row retained automatically
+  - non-empty row shows green `✓`
+  - save still applies immediately (hot reload)
+- Rules page now clearly separates:
+  - current effective commands/groups
+  - editable final commands/groups
+  - default commands/groups reference
+- Added explicit `重新加载当前生效内容` action to refresh editor state from runtime.
+
 ## v0.3.2 - 2026-03-05
 
 - Routine log retention set to 10 lines by default.
