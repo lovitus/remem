@@ -24,6 +24,13 @@ type Stats struct {
 	Running         bool      `json:"running"`
 }
 
+type RuleState struct {
+	ConfigPath   string            `json:"configPath"`
+	CustomPatch  config.FileConfig `json:"customPatch"`
+	CommandCount int               `json:"commandCount"`
+	GroupNames   []string          `json:"groupNames"`
+}
+
 type Monitor struct {
 	cfg       config.Config
 	logs      *logbuf.Buffer
@@ -31,13 +38,24 @@ type Monitor struct {
 
 	statsMu sync.RWMutex
 	stats   Stats
+
+	rulesMu          sync.RWMutex
+	commandWatchlist map[string]struct{}
+	groups           []config.GroupSpec
+	customPatch      config.FileConfig
+	groupCursor      int
+	hotGroups        map[string]time.Time
 }
 
 func New(cfg config.Config, logs *logbuf.Buffer) *Monitor {
 	return &Monitor{
-		cfg:       cfg,
-		logs:      logs,
-		triggerCh: make(chan string, 1),
+		cfg:              cfg,
+		logs:             logs,
+		triggerCh:        make(chan string, 1),
+		commandWatchlist: cloneCommandSet(cfg.CommandWatchlist),
+		groups:           cloneGroups(cfg.Groups),
+		customPatch:      cfg.CustomPatch,
+		hotGroups:        make(map[string]time.Time),
 	}
 }
 
@@ -83,6 +101,45 @@ func (m *Monitor) TriggerScan(source string) {
 	}
 }
 
+func (m *Monitor) UpdateCustomPatch(patch config.FileConfig, persist bool) error {
+	commands, groups := config.BuildRuleSet(m.cfg.EnvPatch, patch)
+	if persist {
+		if err := config.SaveFileConfig(m.cfg.ConfigPath, patch); err != nil {
+			return err
+		}
+	}
+
+	m.rulesMu.Lock()
+	m.commandWatchlist = cloneCommandSet(commands)
+	m.groups = cloneGroups(groups)
+	m.customPatch = patch
+	m.groupCursor = 0
+	m.hotGroups = make(map[string]time.Time)
+	m.rulesMu.Unlock()
+
+	m.logs.Addf("rules updated: commands=%d groups=%d", len(commands), len(groups))
+	if persist && m.cfg.ConfigPath != "" {
+		m.logs.Addf("rules persisted: %s", m.cfg.ConfigPath)
+	}
+	return nil
+}
+
+func (m *Monitor) RuleState() RuleState {
+	m.rulesMu.RLock()
+	defer m.rulesMu.RUnlock()
+	names := make([]string, 0, len(m.groups))
+	for _, g := range m.groups {
+		names = append(names, g.Name)
+	}
+	sort.Strings(names)
+	return RuleState{
+		ConfigPath:   m.cfg.ConfigPath,
+		CustomPatch:  m.customPatch,
+		CommandCount: len(m.commandWatchlist),
+		GroupNames:   names,
+	}
+}
+
 func (m *Monitor) runScan(source string) {
 	m.setRunning(true)
 	defer m.setRunning(false)
@@ -91,7 +148,9 @@ func (m *Monitor) runScan(source string) {
 
 func (m *Monitor) scan(source string) {
 	start := time.Now()
-	procs, byPID, children, err := snapshotProcesses(m.cfg.CommandWatchlist, m.cfg.Groups)
+	commands, groupsToScan := m.snapshotRulesForScan(source)
+
+	procs, byPID, children, err := snapshotProcesses(commands, groupsToScan)
 	if err != nil {
 		m.logs.Addf("scan error (%s): %v", source, err)
 		m.updateStats(start, source, 0, 0, fmt.Sprintf("scan error: %v", err))
@@ -101,12 +160,11 @@ func (m *Monitor) scan(source string) {
 	killedPIDs := make(map[int32]struct{})
 	killed := 0
 
-	// Rule 1: lightweight command hard cap (2 GiB by default).
 	for _, p := range procs {
 		if p.PID == int32(os.Getpid()) {
 			continue
 		}
-		if _, ok := m.cfg.CommandWatchlist[p.NameNorm]; !ok {
+		if _, ok := commands[p.NameNorm]; !ok {
 			continue
 		}
 		if p.RSSBytes <= m.cfg.CommandLimitBytes {
@@ -118,15 +176,16 @@ func (m *Monitor) scan(source string) {
 		}
 	}
 
-	// Rule 2: app-group cap (6 GiB by default), kill largest child to preserve UI.
-	for _, g := range m.cfg.Groups {
+	for _, g := range groupsToScan {
 		roots := findRootPIDs(g, byPID)
 		if len(roots) == 0 {
+			m.touchGroupHeat(g.Name, 0)
 			continue
 		}
 
 		members := collectGroupMembers(roots, children, byPID)
 		if len(members) == 0 {
+			m.touchGroupHeat(g.Name, 0)
 			continue
 		}
 
@@ -134,6 +193,7 @@ func (m *Monitor) scan(source string) {
 		for _, p := range members {
 			total += p.RSSBytes
 		}
+		m.touchGroupHeat(g.Name, total)
 		if total <= m.cfg.GroupLimitBytes {
 			continue
 		}
@@ -151,9 +211,71 @@ func (m *Monitor) scan(source string) {
 	}
 
 	dur := time.Since(start)
-	summary := fmt.Sprintf("scan ok (%s): procs=%d killed=%d duration=%s", source, len(procs), killed, dur.Truncate(time.Millisecond))
+	summary := fmt.Sprintf("scan ok (%s): procs=%d groups=%d killed=%d duration=%s", source, len(procs), len(groupsToScan), killed, dur.Truncate(time.Millisecond))
 	m.logs.Add(summary)
 	m.updateStats(start, source, len(procs), killed, summary)
+}
+
+func (m *Monitor) snapshotRulesForScan(source string) (map[string]struct{}, []config.GroupSpec) {
+	m.rulesMu.Lock()
+	defer m.rulesMu.Unlock()
+
+	commands := cloneCommandSet(m.commandWatchlist)
+	allGroups := cloneGroups(m.groups)
+	if len(allGroups) == 0 {
+		return commands, nil
+	}
+	if source != "ticker" {
+		return commands, allGroups
+	}
+
+	now := time.Now()
+	for name, exp := range m.hotGroups {
+		if now.After(exp) {
+			delete(m.hotGroups, name)
+		}
+	}
+
+	perScan := m.cfg.GroupsPerScan
+	if perScan <= 0 || perScan >= len(allGroups) {
+		return commands, allGroups
+	}
+
+	selected := make([]config.GroupSpec, 0, perScan+len(m.hotGroups))
+	selectedSet := make(map[string]struct{}, perScan+len(m.hotGroups))
+
+	for i := 0; i < perScan; i++ {
+		idx := (m.groupCursor + i) % len(allGroups)
+		g := allGroups[idx]
+		selected = append(selected, g)
+		selectedSet[g.Name] = struct{}{}
+	}
+	m.groupCursor = (m.groupCursor + perScan) % len(allGroups)
+
+	for _, g := range allGroups {
+		if _, hot := m.hotGroups[g.Name]; !hot {
+			continue
+		}
+		if _, exists := selectedSet[g.Name]; exists {
+			continue
+		}
+		selected = append(selected, g)
+		selectedSet[g.Name] = struct{}{}
+	}
+
+	return commands, selected
+}
+
+func (m *Monitor) touchGroupHeat(groupName string, total uint64) {
+	m.rulesMu.Lock()
+	defer m.rulesMu.Unlock()
+	if m.cfg.GroupHotThresholdRate <= 0 || m.cfg.GroupHotTTL <= 0 {
+		return
+	}
+	threshold := uint64(float64(m.cfg.GroupLimitBytes) * m.cfg.GroupHotThresholdRate)
+	if total >= threshold {
+		m.hotGroups[groupName] = time.Now().Add(m.cfg.GroupHotTTL)
+	}
 }
 
 func findRootPIDs(group config.GroupSpec, byPID map[int32]Proc) []int32 {
@@ -278,4 +400,18 @@ func (m *Monitor) setRunning(v bool) {
 	m.statsMu.Lock()
 	defer m.statsMu.Unlock()
 	m.stats.Running = v
+}
+
+func cloneCommandSet(in map[string]struct{}) map[string]struct{} {
+	out := make(map[string]struct{}, len(in))
+	for k := range in {
+		out[k] = struct{}{}
+	}
+	return out
+}
+
+func cloneGroups(in []config.GroupSpec) []config.GroupSpec {
+	out := make([]config.GroupSpec, len(in))
+	copy(out, in)
+	return out
 }

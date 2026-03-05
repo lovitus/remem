@@ -6,7 +6,7 @@ cd "$ROOT_DIR"
 
 VERSION="${1:-}"
 if [[ -z "$VERSION" ]]; then
-  echo "usage: $0 <version-tag-like-v0.2.0>"
+  echo "usage: $0 <version-tag-like-v0.3.0>"
   exit 1
 fi
 

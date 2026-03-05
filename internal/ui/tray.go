@@ -16,6 +16,7 @@ type TrayOptions struct {
 	Monitor  *guard.Monitor
 	Logs     *logbuf.Buffer
 	LogUIURL string
+	RulesURL string
 }
 
 func RunTray(opts TrayOptions) {
@@ -32,6 +33,7 @@ func onReady(opts TrayOptions) {
 	mStatus := systray.AddMenuItem("Status: starting...", "live status")
 	mStatus.Disable()
 	mOpenLog := systray.AddMenuItem("Open Live Logs", "Open in-memory logs")
+	mEditRules := systray.AddMenuItem("Edit Rules", "Open rules editor")
 	mForceScan := systray.AddMenuItem("Force Scan Now", "Trigger a scan immediately")
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Quit remem")
@@ -56,6 +58,11 @@ func onReady(opts TrayOptions) {
 			case <-mOpenLog.ClickedCh:
 				opts.Logs.Addf("open log viewer: %s", opts.LogUIURL)
 				if err := openBrowser(opts.LogUIURL); err != nil {
+					opts.Logs.Addf("open browser failed: %v", err)
+				}
+			case <-mEditRules.ClickedCh:
+				opts.Logs.Addf("open rules editor: %s", opts.RulesURL)
+				if err := openBrowser(opts.RulesURL); err != nil {
 					opts.Logs.Addf("open browser failed: %v", err)
 				}
 			case <-mForceScan.ClickedCh:

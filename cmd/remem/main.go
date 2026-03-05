@@ -22,7 +22,7 @@ func main() {
 	logs := logbuf.New(cfg.MaxInMemoryLogLines)
 	logs.Add("remem guard starting")
 	logs.Addf("version=%s scan interval=%s command_limit=%s group_limit=%s", version, cfg.ScanInterval, bytesText(cfg.CommandLimitBytes), bytesText(cfg.GroupLimitBytes))
-	logs.Addf("watchlist=%d groups=%d", len(cfg.CommandWatchlist), len(cfg.Groups))
+	logs.Addf("watchlist=%d groups=%d groups_per_scan=%d hot_ratio=%.2f hot_ttl=%s", len(cfg.CommandWatchlist), len(cfg.Groups), cfg.GroupsPerScan, cfg.GroupHotThresholdRate, cfg.GroupHotTTL)
 	if cfg.ConfigPath != "" {
 		logs.Addf("config file: %s", cfg.ConfigPath)
 	}
@@ -42,6 +42,7 @@ func main() {
 		panic(err)
 	}
 	logs.Addf("log ui: %s", server.URL)
+	logs.Addf("rules ui: %s", server.RulesURL)
 
 	go func() {
 		<-ctx.Done()
@@ -54,6 +55,7 @@ func main() {
 		Monitor:  monitor,
 		Logs:     logs,
 		LogUIURL: server.URL,
+		RulesURL: server.RulesURL,
 	})
 }
 

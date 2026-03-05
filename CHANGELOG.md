@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.3.0 - 2026-03-05
+
+- Added tray `Edit Rules` entry with web editor.
+- Rules editor now saves and applies immediately (hot reload).
+- Added persistent custom rules file support with default path:
+  - macOS: `~/Library/Application Support/remem/rules.json`
+  - Windows: `%AppData%\\remem\\rules.json`
+- Added Windows-focused CPU optimizations:
+  - group round-robin scanning (`REMEM_GROUPS_PER_SCAN`)
+  - hot-group fast path (`REMEM_GROUP_HOT_RATIO`, `REMEM_GROUP_HOT_TTL_SEC`)
+  - RSS collection only on relevant processes
+- Replaced tray icon with a custom remem icon (not reused from systray sample).
+
 ## v0.2.0 - 2026-03-05
 
 - Renamed project identity to `remem` (binary, module, docs, tray title, release assets).
