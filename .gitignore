@@ -1,6 +1,6 @@
 # Binaries
-remem-guard
-remem-guard.exe
+/remem-guard
+/remem-guard.exe
 *.exe
 *.dll
 *.so
