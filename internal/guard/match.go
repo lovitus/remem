@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"rememguard/internal/config"
+	"remem/internal/config"
 )
 
 func bytesToGiB(b uint64) float64 {

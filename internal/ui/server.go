@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"rememguard/internal/guard"
-	"rememguard/internal/logbuf"
+	"remem/internal/guard"
+	"remem/internal/logbuf"
 )
 
 type LogServer struct {

@@ -6,13 +6,12 @@ import (
 	"os"
 	"sort"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/shirou/gopsutil/v4/process"
 
-	"rememguard/internal/config"
-	"rememguard/internal/logbuf"
+	"remem/internal/config"
+	"remem/internal/logbuf"
 )
 
 type Stats struct {
@@ -26,53 +25,73 @@ type Stats struct {
 }
 
 type Monitor struct {
-	cfg     config.Config
-	logs    *logbuf.Buffer
-	running atomic.Bool
+	cfg       config.Config
+	logs      *logbuf.Buffer
+	triggerCh chan string
 
 	statsMu sync.RWMutex
 	stats   Stats
 }
 
 func New(cfg config.Config, logs *logbuf.Buffer) *Monitor {
-	return &Monitor{cfg: cfg, logs: logs}
+	return &Monitor{
+		cfg:       cfg,
+		logs:      logs,
+		triggerCh: make(chan string, 1),
+	}
 }
 
 func (m *Monitor) Start(ctx context.Context) {
-	m.TriggerScan("startup")
+	go m.loop(ctx)
+}
 
-	ticker := time.NewTicker(m.cfg.ScanInterval)
-	go func() {
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				m.TriggerScan("ticker")
-			}
+func (m *Monitor) loop(ctx context.Context) {
+	m.runScan("startup")
+
+	timer := time.NewTimer(m.cfg.ScanInterval)
+	defer timer.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case src := <-m.triggerCh:
+			m.runScan(src)
+			resetTimer(timer, m.cfg.ScanInterval)
+		case <-timer.C:
+			m.runScan("ticker")
+			resetTimer(timer, m.cfg.ScanInterval)
 		}
-	}()
+	}
+}
+
+func resetTimer(t *time.Timer, d time.Duration) {
+	if !t.Stop() {
+		select {
+		case <-t.C:
+		default:
+		}
+	}
+	t.Reset(d)
 }
 
 func (m *Monitor) TriggerScan(source string) {
-	if !m.running.CompareAndSwap(false, true) {
-		m.logs.Addf("scan skipped (%s): previous scan still running", source)
-		m.setRunning(true)
-		return
+	select {
+	case m.triggerCh <- source:
+	default:
+		m.logs.Addf("scan request dropped (%s): queue full", source)
 	}
-	m.setRunning(true)
+}
 
-	go func() {
-		defer m.running.Store(false)
-		defer m.setRunning(false)
-		m.scan(source)
-	}()
+func (m *Monitor) runScan(source string) {
+	m.setRunning(true)
+	defer m.setRunning(false)
+	m.scan(source)
 }
 
 func (m *Monitor) scan(source string) {
 	start := time.Now()
-	procs, byPID, children, err := snapshotProcesses()
+	procs, byPID, children, err := snapshotProcesses(m.cfg.CommandWatchlist, m.cfg.Groups)
 	if err != nil {
 		m.logs.Addf("scan error (%s): %v", source, err)
 		m.updateStats(start, source, 0, 0, fmt.Sprintf("scan error: %v", err))

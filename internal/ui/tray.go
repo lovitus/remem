@@ -8,8 +8,8 @@ import (
 
 	"github.com/getlantern/systray"
 
-	"rememguard/internal/guard"
-	"rememguard/internal/logbuf"
+	"remem/internal/guard"
+	"remem/internal/logbuf"
 )
 
 type TrayOptions struct {
@@ -23,7 +23,10 @@ func RunTray(opts TrayOptions) {
 }
 
 func onReady(opts TrayOptions) {
-	systray.SetTitle("RememGuard")
+	if len(trayIconBytes) > 0 {
+		systray.SetIcon(trayIconBytes)
+	}
+	systray.SetTitle("remem")
 	systray.SetTooltip("Memory guard for dev tools and browsers")
 
 	mStatus := systray.AddMenuItem("Status: starting...", "live status")
@@ -31,7 +34,7 @@ func onReady(opts TrayOptions) {
 	mOpenLog := systray.AddMenuItem("Open Live Logs", "Open in-memory logs")
 	mForceScan := systray.AddMenuItem("Force Scan Now", "Trigger a scan immediately")
 	systray.AddSeparator()
-	mQuit := systray.AddMenuItem("Quit", "Quit RememGuard")
+	mQuit := systray.AddMenuItem("Quit", "Quit remem")
 
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)

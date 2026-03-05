@@ -1,26 +1,27 @@
 # Release Guide
 
-## Local release steps
+## Local release
 
-1. Build archives and checksums:
+1. Build artifacts and checksums:
 
 ```bash
-bash ./scripts/release.sh v0.1.0
+bash ./scripts/release.sh v0.2.0
 ```
 
-2. Create git tag and push:
+2. Push code and tag:
 
 ```bash
-git tag v0.1.0
-git push origin main --tags
+git push origin main
+git tag v0.2.0
+git push origin v0.2.0
 ```
 
 3. Create GitHub release:
 
 ```bash
-gh release create v0.1.0 dist/release/* --title "v0.1.0" --notes-file CHANGELOG.md
+gh release create v0.2.0 dist/release/* --title "v0.2.0" --notes-file CHANGELOG.md
 ```
 
 ## GitHub Actions release
 
-Pushing a tag `v*` triggers `.github/workflows/release.yml` to build and upload assets.
+Pushing a tag `v*` triggers `.github/workflows/release.yml` to build and upload artifacts.

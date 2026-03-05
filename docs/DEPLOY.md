@@ -2,31 +2,31 @@
 
 ## macOS
 
-### 1) Build
+### Build
 
 ```bash
-go build -o remem-guard ./cmd/remem-guard
+go build -o remem ./cmd/remem
 ```
 
-### 2) Run
+### Run
 
 ```bash
-./remem-guard
+./remem
 ```
 
-### 3) Auto-start (LaunchAgent)
+### Auto-start (LaunchAgent)
 
-Create `~/Library/LaunchAgents/com.lovitus.remem-guard.plist`:
+Create `~/Library/LaunchAgents/com.lovitus.remem.plist`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
-    <key>Label</key><string>com.lovitus.remem-guard</string>
+    <key>Label</key><string>com.lovitus.remem</string>
     <key>ProgramArguments</key>
     <array>
-      <string>/ABS/PATH/remem-guard</string>
+      <string>/ABS/PATH/remem</string>
     </array>
     <key>RunAtLoad</key><true/>
     <key>KeepAlive</key><true/>
@@ -37,35 +37,33 @@ Create `~/Library/LaunchAgents/com.lovitus.remem-guard.plist`:
 Load:
 
 ```bash
-launchctl load ~/Library/LaunchAgents/com.lovitus.remem-guard.plist
+launchctl load ~/Library/LaunchAgents/com.lovitus.remem.plist
 ```
 
 ## Windows
 
-### 1) Build
+### Build
 
 ```powershell
-go build -o remem-guard.exe ./cmd/remem-guard
+go build -o remem.exe ./cmd/remem
 ```
 
-### 2) Run
+### Run
 
 ```powershell
-.\remem-guard.exe
+.\remem.exe
 ```
 
-### 3) Auto-start
+### Auto-start
 
 Place shortcut in:
 
 `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup`
 
-## Environment tuning
+## Recommended defaults
 
 ```bash
-REMEM_SCAN_INTERVAL_MS=2000
+REMEM_SCAN_INTERVAL_MS=3000
 REMEM_COMMAND_LIMIT_GB=2
 REMEM_GROUP_LIMIT_GB=6
-REMEM_MAX_LOG_LINES=400
-REMEM_EXTRA_COMMANDS="cmd1,cmd2"
 ```

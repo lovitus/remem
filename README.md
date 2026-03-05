@@ -1,15 +1,8 @@
-# remem-guard
+# remem
 
 Cross-platform memory guard for macOS and Windows.
 
-`remem-guard` monitors process memory in real time, kills runaway child processes before they freeze the whole desktop, and keeps logs in memory only.
-
-## 设计目标
-
-- 防止 AI IDE / 浏览器子进程内存暴涨拖垮系统。
-- 优先保活主界面，只终止异常子进程。
-- 扫描器绝不重入，避免 shell 任务堆积。
-- 仅内存日志，不落盘。
+`remem` monitors process memory in real time, terminates runaway child processes before they freeze the desktop, and keeps logs in memory only.
 
 ## 核心规则
 
@@ -30,55 +23,69 @@ Cross-platform memory guard for macOS and Windows.
 - edge
 - safari
 
-### 3) 防重入
+### 3) 非重入扫描
 
-若上一轮扫描尚未结束，下一轮会跳过，不会并发堆积。
+扫描串行执行。上一轮未完成时不会并发堆积任务。
 
-## 托盘与日志
+### 4) 托盘与内存日志
 
 - 托盘菜单：`Open Live Logs`, `Force Scan Now`, `Quit`
-- 实时日志页：本地 HTTP 页面
-- 日志仅保存在内存环形缓冲区
+- 彩色托盘图标（Windows/macOS）
+- 日志只在内存环形缓冲区中保存，不写盘
 
 ## 快速开始
 
 ```bash
-go run ./cmd/remem-guard
+go run ./cmd/remem
 ```
 
 ## 构建
 
 ```bash
 # macOS
-go build -o remem-guard ./cmd/remem-guard
+go build -o remem ./cmd/remem
 
-# Windows (native Windows host recommended)
-go build -o remem-guard.exe ./cmd/remem-guard
+# Windows
+go build -o remem.exe ./cmd/remem
 ```
 
-也可使用发布打包脚本：
+发布包构建（Windows 自动无黑框）：
 
 ```bash
-bash ./scripts/release.sh v0.1.0
+bash ./scripts/release.sh v0.2.0
 ```
 
-## 配置（环境变量）
+## 配置
 
-- `REMEM_SCAN_INTERVAL_MS`：扫描周期，默认 `2000`
-- `REMEM_COMMAND_LIMIT_GB`：命令单进程阈值，默认 `2`
-- `REMEM_GROUP_LIMIT_GB`：应用组阈值，默认 `6`
-- `REMEM_MAX_LOG_LINES`：内存日志行数，默认 `400`
-- `REMEM_LOG_HTTP_ADDR`：日志 HTTP 监听地址，默认 `127.0.0.1:0`
-- `REMEM_EXTRA_COMMANDS`：额外命令列表，逗号分隔
+### 基础环境变量
 
-## 运行建议
+- `REMEM_SCAN_INTERVAL_MS`：扫描周期（默认 macOS 2000，Windows 3000）
+- `REMEM_COMMAND_LIMIT_GB`：命令单进程阈值（默认 `2`）
+- `REMEM_GROUP_LIMIT_GB`：应用组阈值（默认 `6`）
+- `REMEM_MAX_LOG_LINES`：内存日志行数（默认 `400`）
+- `REMEM_LOG_HTTP_ADDR`：日志 HTTP 监听地址（默认 `127.0.0.1:0`）
+- `REMEM_SHOW_CONSOLE`：Windows 设为 `1` 可保留控制台
 
-- 建议开机自启并常驻托盘。
-- 首次运行建议在有管理员权限的终端启动，以便有权限终止高权限子进程。
-- 浏览器场景下，命中的通常是最异常的 tab/render 进程。
+### 自定义命令名 / 程序名
+
+- `REMEM_EXTRA_COMMANDS`：追加命令名单（逗号分隔）
+- `REMEM_REMOVE_COMMANDS`：从默认命令名单移除（逗号分隔）
+- `REMEM_EXTRA_GROUPS`：追加程序组名（逗号分隔）
+- `REMEM_REMOVE_GROUPS`：移除默认程序组名（逗号分隔）
+
+示例：
+
+```bash
+REMEM_EXTRA_COMMANDS="deno,bun"
+REMEM_EXTRA_GROUPS="brave,opera"
+```
+
+### JSON 配置文件（可选）
+
+设置 `REMEM_CONFIG_PATH=/path/to/config.json`，格式见 `docs/config.example.json`。
 
 ## 文档
 
-- [运行与部署](/Users/fanli/Documents/remem/docs/DEPLOY.md)
-- [发布流程](/Users/fanli/Documents/remem/docs/RELEASE.md)
-- [变更记录](/Users/fanli/Documents/remem/CHANGELOG.md)
+- `docs/DEPLOY.md`
+- `docs/RELEASE.md`
+- `CHANGELOG.md`

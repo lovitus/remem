@@ -1,0 +1,10 @@
+{
+  "commands": {
+    "add": ["my_script_runner"],
+    "remove": ["less"]
+  },
+  "groups": {
+    "add": ["brave", "opera"],
+    "remove": ["safari"]
+  }
+}

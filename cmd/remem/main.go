@@ -7,19 +7,28 @@ import (
 	"syscall"
 	"time"
 
-	"rememguard/internal/config"
-	"rememguard/internal/guard"
-	"rememguard/internal/logbuf"
-	"rememguard/internal/ui"
+	"remem/internal/config"
+	"remem/internal/guard"
+	"remem/internal/logbuf"
+	"remem/internal/ui"
 )
 
 var version = "dev"
 
 func main() {
+	hideConsoleWindowIfNeeded()
+
 	cfg := config.Default()
 	logs := logbuf.New(cfg.MaxInMemoryLogLines)
 	logs.Add("remem guard starting")
 	logs.Addf("version=%s scan interval=%s command_limit=%s group_limit=%s", version, cfg.ScanInterval, bytesText(cfg.CommandLimitBytes), bytesText(cfg.GroupLimitBytes))
+	logs.Addf("watchlist=%d groups=%d", len(cfg.CommandWatchlist), len(cfg.Groups))
+	if cfg.ConfigPath != "" {
+		logs.Addf("config file: %s", cfg.ConfigPath)
+	}
+	for _, w := range cfg.Warnings {
+		logs.Addf("config warning: %s", w)
+	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
