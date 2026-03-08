@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3.5 - 2026-03-08
+
+- Moved the three key actions to the top-right of Rules Editor:
+  - `保存并立即生效`
+  - `重新加载当前生效内容`
+  - `恢复默认并生效`
+- Action bar is now sticky on desktop to reduce missed saves while editing long rule lists.
+- On mobile/small widths, action bar gracefully falls back to normal flow.
+
 ## v0.3.4 - 2026-03-08
 
 - Added rule-level memory limit configuration in `rules.json`:

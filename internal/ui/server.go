@@ -191,6 +191,13 @@ const rulesHTML = `<!doctype html>
     font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   }
   .page { max-width: 1160px; margin: 18px auto; padding: 0 16px 24px; }
+  .topbar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: start;
+  }
+  .head-left { min-width: 0; }
   h1 { margin: 0 0 8px; font-size: 24px; letter-spacing: .2px; }
   .sub { color: var(--muted); font-size: 13px; }
   .tips {
@@ -292,7 +299,20 @@ const rulesHTML = `<!doctype html>
   }
   .xbtn:disabled { opacity: .35; cursor: not-allowed; }
 
-  .ops { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .ops {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    position: sticky;
+    top: 10px;
+    z-index: 20;
+    background: linear-gradient(180deg, rgba(16,23,34,.95), rgba(16,23,34,.78));
+    border: 1px solid #2d4160;
+    border-radius: 10px;
+    padding: 8px;
+    max-width: 460px;
+  }
   .btn {
     border: 0;
     border-radius: 9px;
@@ -310,6 +330,12 @@ const rulesHTML = `<!doctype html>
   a { color: #8fd3ff; }
 
   @media (max-width: 900px) {
+    .topbar { grid-template-columns: 1fr; }
+    .ops {
+      position: static;
+      justify-content: flex-start;
+      max-width: none;
+    }
     .grid-2 { grid-template-columns: 1fr; }
     .limits { grid-template-columns: 1fr; }
     .token-row { grid-template-columns: 1fr 92px 32px; }
@@ -318,8 +344,18 @@ const rulesHTML = `<!doctype html>
 </head>
 <body>
 <div class="page">
-  <h1>Rules Editor</h1>
-  <div class="sub" id="meta"></div>
+  <div class="topbar">
+    <div class="head-left">
+      <h1>Rules Editor</h1>
+      <div class="sub" id="meta"></div>
+    </div>
+    <div class="ops">
+      <button class="btn save" id="saveBtn">保存并立即生效</button>
+      <button class="btn reload" id="reloadBtn">重新加载当前生效内容</button>
+      <button class="btn restore" id="restoreBtn">恢复默认并生效</button>
+    </div>
+  </div>
+
   <div class="tips">
     支持两层内存限制：<b>全局上限</b> + <b>单项自定义上限</b>。<br/>
     命令规则和程序组规则都在一个大框内编辑：每项后面 <b>x</b> 删除；末尾空项后面 <b>+</b> 添加。<br/>
@@ -376,11 +412,6 @@ const rulesHTML = `<!doctype html>
     </div>
   </div>
 
-  <div class="ops">
-    <button class="btn save" id="saveBtn">保存并立即生效</button>
-    <button class="btn reload" id="reloadBtn">重新加载当前生效内容</button>
-    <button class="btn restore" id="restoreBtn">恢复默认并生效</button>
-  </div>
   <div class="state" id="status"></div>
   <div class="state"><a href="/">Back to logs</a></div>
 </div>
