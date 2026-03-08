@@ -304,14 +304,16 @@ const rulesHTML = `<!doctype html>
     gap: 8px;
     flex-wrap: wrap;
     justify-content: flex-end;
-    position: sticky;
-    top: 10px;
-    z-index: 20;
+    position: fixed;
+    top: 12px;
+    right: max(16px, calc((100vw - 1160px) / 2 + 16px));
+    z-index: 60;
     background: linear-gradient(180deg, rgba(16,23,34,.95), rgba(16,23,34,.78));
     border: 1px solid #2d4160;
     border-radius: 10px;
     padding: 8px;
     max-width: 460px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .35);
   }
   .btn {
     border: 0;

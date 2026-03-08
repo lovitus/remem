@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.6 - 2026-03-08
+
+- Changed rules-page action bar from sticky to true floating fixed toolbar on desktop.
+- Top-right action buttons now remain visible while scrolling long pages.
+- Preserved responsive fallback on small screens (normal flow layout).
+
 ## v0.3.5 - 2026-03-08
 
 - Moved the three key actions to the top-right of Rules Editor:
