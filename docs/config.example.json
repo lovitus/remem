@@ -1,10 +1,23 @@
 {
+  "limits": {
+    "commandGiB": 2,
+    "groupGiB": 6
+  },
   "commands": {
     "add": ["my_script_runner"],
-    "remove": ["less"]
+    "remove": ["less"],
+    "limitsGiB": {
+      "sed": 1.5,
+      "my_script_runner": 3
+    }
   },
   "groups": {
     "add": ["brave", "opera"],
-    "remove": ["safari"]
+    "remove": ["safari"],
+    "limitsGiB": {
+      "codex": 7,
+      "chrome": 8,
+      "brave": 5.5
+    }
   }
 }

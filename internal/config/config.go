@@ -25,13 +25,20 @@ type GroupSpec struct {
 }
 
 type NamePatch struct {
-	Add    []string `json:"add"`
-	Remove []string `json:"remove"`
+	Add       []string           `json:"add"`
+	Remove    []string           `json:"remove"`
+	LimitsGiB map[string]float64 `json:"limitsGiB,omitempty"`
+}
+
+type LimitPatch struct {
+	CommandGiB float64 `json:"commandGiB,omitempty"`
+	GroupGiB   float64 `json:"groupGiB,omitempty"`
 }
 
 type FileConfig struct {
-	Commands NamePatch `json:"commands"`
-	Groups   NamePatch `json:"groups"`
+	Limits   LimitPatch `json:"limits,omitempty"`
+	Commands NamePatch  `json:"commands"`
+	Groups   NamePatch  `json:"groups"`
 }
 
 type Config struct {
@@ -74,6 +81,7 @@ func Default() Config {
 			Remove: parseCSVEnv("REMEM_REMOVE_GROUPS"),
 		},
 	}
+	envPatch = NormalizeFileConfig(envPatch)
 
 	configPath := strings.TrimSpace(os.Getenv("REMEM_CONFIG_PATH"))
 	if configPath == "" {
@@ -86,6 +94,7 @@ func Default() Config {
 		warnings = append(warnings, "load config file failed: "+err.Error())
 	}
 
+	customPatch = NormalizeFileConfig(customPatch)
 	commands, groups := BuildRuleSet(envPatch, customPatch)
 
 	return Config{
@@ -138,7 +147,7 @@ func LoadFileConfig(path string) (FileConfig, error) {
 	if err := json.Unmarshal(buf, &fc); err != nil {
 		return fc, err
 	}
-	return fc, nil
+	return NormalizeFileConfig(fc), nil
 }
 
 func SaveFileConfig(path string, fc FileConfig) error {
@@ -148,12 +157,78 @@ func SaveFileConfig(path string, fc FileConfig) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
-	buf, err := json.MarshalIndent(fc, "", "  ")
+	buf, err := json.MarshalIndent(NormalizeFileConfig(fc), "", "  ")
 	if err != nil {
 		return err
 	}
 	buf = append(buf, '\n')
 	return os.WriteFile(path, buf, 0644)
+}
+
+func NormalizeFileConfig(in FileConfig) FileConfig {
+	out := FileConfig{
+		Limits: LimitPatch{
+			CommandGiB: positiveGiBOrZero(in.Limits.CommandGiB),
+			GroupGiB:   positiveGiBOrZero(in.Limits.GroupGiB),
+		},
+		Commands: NamePatch{
+			Add:       normalizeNameList(in.Commands.Add),
+			Remove:    normalizeNameList(in.Commands.Remove),
+			LimitsGiB: normalizeLimitMap(in.Commands.LimitsGiB),
+		},
+		Groups: NamePatch{
+			Add:       normalizeNameList(in.Groups.Add),
+			Remove:    normalizeNameList(in.Groups.Remove),
+			LimitsGiB: normalizeLimitMap(in.Groups.LimitsGiB),
+		},
+	}
+	return out
+}
+
+func BuildLimitSet(baseCommandLimitBytes, baseGroupLimitBytes uint64, patch FileConfig, commands map[string]struct{}, groups []GroupSpec) (uint64, uint64, map[string]uint64, map[string]uint64) {
+	commandLimit := baseCommandLimitBytes
+	groupLimit := baseGroupLimitBytes
+	if patch.Limits.CommandGiB > 0 {
+		commandLimit = bytesFromGiB(patch.Limits.CommandGiB)
+	}
+	if patch.Limits.GroupGiB > 0 {
+		groupLimit = bytesFromGiB(patch.Limits.GroupGiB)
+	}
+
+	commandOverrides := make(map[string]uint64)
+	for name, gib := range patch.Commands.LimitsGiB {
+		n := normalizeName(name)
+		if n == "" || gib <= 0 {
+			continue
+		}
+		if _, ok := commands[n]; !ok {
+			continue
+		}
+		commandOverrides[n] = bytesFromGiB(gib)
+	}
+
+	groupSet := make(map[string]struct{}, len(groups))
+	for _, g := range groups {
+		n := normalizeName(g.Name)
+		if n == "" {
+			continue
+		}
+		groupSet[n] = struct{}{}
+	}
+
+	groupOverrides := make(map[string]uint64)
+	for name, gib := range patch.Groups.LimitsGiB {
+		n := normalizeName(name)
+		if n == "" || gib <= 0 {
+			continue
+		}
+		if _, ok := groupSet[n]; !ok {
+			continue
+		}
+		groupOverrides[n] = bytesFromGiB(gib)
+	}
+
+	return commandLimit, groupLimit, commandOverrides, groupOverrides
 }
 
 func defaultConfigPath() string {
@@ -172,6 +247,49 @@ func normalizeName(s string) string {
 	s = strings.TrimSpace(strings.ToLower(s))
 	s = strings.TrimSuffix(s, ".exe")
 	return s
+}
+
+func normalizeNameList(in []string) []string {
+	out := make([]string, 0, len(in))
+	seen := make(map[string]struct{}, len(in))
+	for _, raw := range in {
+		n := normalizeName(raw)
+		if n == "" {
+			continue
+		}
+		if _, ok := seen[n]; ok {
+			continue
+		}
+		seen[n] = struct{}{}
+		out = append(out, n)
+	}
+	return out
+}
+
+func normalizeLimitMap(in map[string]float64) map[string]float64 {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string]float64, len(in))
+	for rawName, rawGiB := range in {
+		name := normalizeName(rawName)
+		gib := positiveGiBOrZero(rawGiB)
+		if name == "" || gib == 0 {
+			continue
+		}
+		out[name] = gib
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+func positiveGiBOrZero(v float64) float64 {
+	if v <= 0 {
+		return 0
+	}
+	return v
 }
 
 func defaultCommandWatchlistBase() map[string]struct{} {
@@ -386,8 +504,12 @@ func durationFromEnvSec(key string, fallbackSec int) time.Duration {
 func bytesFromEnvGiB(key string, fallbackGiB int) uint64 {
 	if s := strings.TrimSpace(os.Getenv(key)); s != "" {
 		if v, err := strconv.ParseFloat(s, 64); err == nil && v > 0 {
-			return uint64(v * 1024 * 1024 * 1024)
+			return bytesFromGiB(v)
 		}
 	}
-	return uint64(fallbackGiB) * 1024 * 1024 * 1024
+	return bytesFromGiB(float64(fallbackGiB))
+}
+
+func bytesFromGiB(v float64) uint64 {
+	return uint64(v * 1024 * 1024 * 1024)
 }

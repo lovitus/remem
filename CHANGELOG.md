@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.3.4 - 2026-03-08
+
+- Added rule-level memory limit configuration in `rules.json`:
+  - global overrides: `limits.commandGiB`, `limits.groupGiB`
+  - per-command overrides: `commands.limitsGiB.<name>`
+  - per-group overrides: `groups.limitsGiB.<name>`
+- Monitor now applies effective limits from rules at runtime and hot-reload.
+- Rules editor redesigned to a big-box item UI:
+  - command/group items shown in one container each
+  - per-item remove button `x`
+  - bottom add row with `+`
+  - per-item optional limit input (GiB)
+  - editable global limit inputs (GiB)
+- Updated docs with new JSON schema examples for limit overrides.
+
 ## v0.3.3 - 2026-03-05
 
 - Rules editor interaction redesigned around direct editing of final effective rules:

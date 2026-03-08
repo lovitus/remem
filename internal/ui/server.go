@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"remem/internal/config"
@@ -56,10 +55,7 @@ func StartLogServer(listenAddr string, logs *logbuf.Buffer, monitor *guard.Monit
 				http.Error(w, "invalid json", http.StatusBadRequest)
 				return
 			}
-			in.Commands.Add = normalizeList(in.Commands.Add)
-			in.Commands.Remove = normalizeList(in.Commands.Remove)
-			in.Groups.Add = normalizeList(in.Groups.Add)
-			in.Groups.Remove = normalizeList(in.Groups.Remove)
+			in = config.NormalizeFileConfig(in)
 
 			if err := monitor.UpdateCustomPatch(in, true); err != nil {
 				http.Error(w, "save failed: "+err.Error(), http.StatusInternalServerError)
@@ -97,18 +93,6 @@ func StartLogServer(listenAddr string, logs *logbuf.Buffer, monitor *guard.Monit
 			return srv.Shutdown(ctx)
 		},
 	}, nil
-}
-
-func normalizeList(in []string) []string {
-	out := make([]string, 0, len(in))
-	for _, s := range in {
-		s = strings.TrimSpace(s)
-		if s == "" {
-			continue
-		}
-		out = append(out, s)
-	}
-	return out
 }
 
 func (s *LogServer) Shutdown(ctx context.Context) error {
@@ -188,33 +172,33 @@ const rulesHTML = `<!doctype html>
 <style>
   :root {
     --bg: #0b1017;
-    --panel: #151d28;
-    --panel2: #101722;
-    --line: #2a3749;
-    --text: #eaf2fc;
-    --muted: #9eb1c9;
-    --ok: #2fc764;
-    --btn: #1f8b5d;
-    --btn2: #5d6a7a;
-    --danger: #cd4f4f;
-    --focus: #5aa0ff;
+    --panel: #141d29;
+    --panel2: #0f1722;
+    --line: #2b3a4f;
+    --text: #ebf2fc;
+    --muted: #9bb0ca;
+    --ok: #36c66b;
+    --btn: #1f8e5e;
+    --btn2: #5d6e82;
+    --danger: #ce4f4f;
+    --focus: #58a0ff;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    background: radial-gradient(circle at top right, #152238 0%, #0b1017 45%);
+    background: radial-gradient(circle at top right, #1a2a44 0%, #0b1017 46%);
     color: var(--text);
     font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   }
-  .page { max-width: 1100px; margin: 18px auto; padding: 0 16px 24px; }
-  h1 { margin: 0 0 8px; font-size: 24px; }
+  .page { max-width: 1160px; margin: 18px auto; padding: 0 16px 24px; }
+  h1 { margin: 0 0 8px; font-size: 24px; letter-spacing: .2px; }
   .sub { color: var(--muted); font-size: 13px; }
   .tips {
     margin-top: 10px;
     border: 1px solid #33506f;
     border-radius: 10px;
     background: #122033;
-    color: #c8d9ed;
+    color: #c7d8ec;
     padding: 10px 12px;
     line-height: 1.6;
   }
@@ -226,7 +210,7 @@ const rulesHTML = `<!doctype html>
     border-radius: 10px;
     padding: 10px;
   }
-  .card h3 { margin: 0 0 8px; font-size: 14px; color: #ddecff; }
+  .card h3 { margin: 0 0 8px; font-size: 14px; color: #ddecff; letter-spacing: .2px; }
   .desc { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
   .list {
     background: var(--panel2);
@@ -241,10 +225,40 @@ const rulesHTML = `<!doctype html>
     font-size: 12px;
   }
 
-  .rows { display: flex; flex-direction: column; gap: 6px; }
-  .row { display: grid; grid-template-columns: 24px 1fr 34px; gap: 6px; align-items: center; }
-  .mark { width: 24px; text-align: center; color: #7f93ad; font-weight: 700; user-select: none; }
-  .mark.ok { color: var(--ok); }
+  .limits { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .limit-row {
+    display: grid;
+    grid-template-columns: 1fr 130px;
+    gap: 8px;
+    align-items: center;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  .token-box {
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    min-height: 220px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .token-row {
+    display: grid;
+    grid-template-columns: 1fr 110px 34px;
+    gap: 8px;
+    align-items: center;
+  }
+  .token-row.add {
+    border-top: 1px dashed #3b4d66;
+    padding-top: 9px;
+    margin-top: 2px;
+  }
+
   .input {
     width: 100%;
     border-radius: 8px;
@@ -255,18 +269,28 @@ const rulesHTML = `<!doctype html>
     font-size: 13px;
     outline: none;
   }
-  .input:focus { border-color: var(--focus); box-shadow: 0 0 0 2px rgba(90, 160, 255, .2); }
-  .minus {
+  .input:focus { border-color: var(--focus); box-shadow: 0 0 0 2px rgba(88, 160, 255, .2); }
+  .num {
+    text-align: right;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  .xbtn, .plus {
     border-radius: 8px;
     border: 1px solid #5a3036;
     background: #2c1a20;
-    color: #ffb0b8;
+    color: #ffb1b9;
     height: 32px;
     cursor: pointer;
     font-size: 18px;
     line-height: 1;
   }
-  .minus:disabled { opacity: .35; cursor: not-allowed; }
+  .plus {
+    border-color: #255b41;
+    background: #173324;
+    color: #98f0bf;
+  }
+  .xbtn:disabled { opacity: .35; cursor: not-allowed; }
 
   .ops { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
   .btn {
@@ -282,10 +306,13 @@ const rulesHTML = `<!doctype html>
   .restore { background: var(--danger); }
   .state { margin-top: 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }
   .oktext { color: var(--ok); }
+  .warn { color: #ffca66; }
   a { color: #8fd3ff; }
 
   @media (max-width: 900px) {
     .grid-2 { grid-template-columns: 1fr; }
+    .limits { grid-template-columns: 1fr; }
+    .token-row { grid-template-columns: 1fr 92px 32px; }
   }
 </style>
 </head>
@@ -294,32 +321,47 @@ const rulesHTML = `<!doctype html>
   <h1>Rules Editor</h1>
   <div class="sub" id="meta"></div>
   <div class="tips">
-    直接编辑“最终生效规则”，不需要理解 Add/Remove。<br/>
-    每行右侧可点 <b>-</b> 删除；末尾永远有一个空行；输入任何内容会显示绿色 <b>✓</b>。<br/>
-    点击“保存并立即生效”会立刻热加载规则。
+    支持两层内存限制：<b>全局上限</b> + <b>单项自定义上限</b>。<br/>
+    命令规则和程序组规则都在一个大框内编辑：每项后面 <b>x</b> 删除；末尾空项后面 <b>+</b> 添加。<br/>
+    保存后立刻热加载生效。
   </div>
 
   <div class="grid-2">
     <div class="card">
-      <h3>当前生效: 命令规则</h3>
+      <h3>当前生效: 命令规则（含限制）</h3>
       <div class="list" id="effectiveCommands"></div>
     </div>
     <div class="card">
-      <h3>当前生效: 程序组规则</h3>
+      <h3>当前生效: 程序组规则（含限制）</h3>
       <div class="list" id="effectiveGroups"></div>
     </div>
   </div>
 
+  <div class="card" style="margin-top:12px">
+    <h3>全局上限（GiB）</h3>
+    <div class="limits">
+      <div class="limit-row">
+        <div>命令规则全局上限</div>
+        <input class="input num" id="globalCommandLimit" type="number" min="0.1" step="0.1" />
+      </div>
+      <div class="limit-row">
+        <div>程序组规则全局上限</div>
+        <input class="input num" id="globalGroupLimit" type="number" min="0.1" step="0.1" />
+      </div>
+    </div>
+    <div class="desc" id="baseLimitsHint" style="margin-top:8px;"></div>
+  </div>
+
   <div class="grid-2">
     <div class="card">
-      <h3>编辑最终生效命令规则</h3>
-      <p class="desc">示例: codex, vim, nano, grep, less, more</p>
-      <div class="rows" id="cmdRows"></div>
+      <h3>命令规则编辑（名称 + 单项上限）</h3>
+      <p class="desc">示例: sed / vim / grep。单项上限留空时使用全局上限。</p>
+      <div class="token-box" id="cmdBox"></div>
     </div>
     <div class="card">
-      <h3>编辑最终生效程序组规则</h3>
-      <p class="desc">示例: codex, windsurf, vscode, chrome, firefox, edge, safari</p>
-      <div class="rows" id="grpRows"></div>
+      <h3>程序组规则编辑（名称 + 单项上限）</h3>
+      <p class="desc">示例: codex / chrome / firefox。单项上限留空时使用全局上限。</p>
+      <div class="token-box" id="grpBox"></div>
     </div>
   </div>
 
@@ -344,130 +386,270 @@ const rulesHTML = `<!doctype html>
 </div>
 
 <script>
+const EPS = 0.0001;
 const state = {
+  baseLimits: { command: 2, group: 6 },
+  activeLimits: { command: 2, group: 6 },
+  globalLimits: { command: 2, group: 6 },
   defaults: { commands: [], groups: [] },
   effective: { commands: [], groups: [] },
-  draft: { commands: [''], groups: [''] },
+  effectiveLimits: { commands: {}, groups: {} },
+  draft: { commands: [], groups: [] },
 };
 
-function normalizeList(arr) {
+function normalizeName(v) {
+  return (v || '').trim().toLowerCase().replace(/\.exe$/, '');
+}
+
+function parsePositive(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return n;
+}
+
+function roundGiB(v) {
+  return Math.round(v * 1000) / 1000;
+}
+
+function fmtGiB(v) {
+  const n = parsePositive(v);
+  return (Math.round(n * 100) / 100).toFixed(2);
+}
+
+function normalizeNameList(arr) {
   const out = [];
   const seen = new Set();
   for (const item of arr || []) {
-    const v = (item || '').trim();
+    const v = normalizeName(item);
     if (!v) continue;
-    const k = v.toLowerCase();
-    if (seen.has(k)) continue;
-    seen.add(k);
+    if (seen.has(v)) continue;
+    seen.add(v);
     out.push(v);
   }
   return out;
 }
 
-function ensureTrailingEmpty(key) {
-  let rows = (state.draft[key] || []).map(v => v || '');
-  while (rows.length > 1 && rows[rows.length - 1].trim() === '' && rows[rows.length - 2].trim() === '') {
-    rows.pop();
+function normalizeItems(items, globalLimit) {
+  const out = [];
+  const seen = new Set();
+  for (const it of items || []) {
+    const name = normalizeName((it || {}).name || '');
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    const isCustom = !!(it && it.custom);
+    const parsed = parsePositive((it || {}).limit);
+    const limit = isCustom ? (parsed || globalLimit) : globalLimit;
+    out.push({ name, limit: roundGiB(limit), custom: isCustom });
   }
-  if (rows.length === 0 || rows[rows.length - 1].trim() !== '') {
-    rows.push('');
-  }
-  state.draft[key] = rows;
+  return out;
 }
 
-function renderRows(key, containerId, placeholder) {
-  ensureTrailingEmpty(key);
-  const wrap = document.getElementById(containerId);
-  wrap.innerHTML = '';
-  const rows = state.draft[key];
+function itemsFromNames(names, overrideMap, globalLimit) {
+  const out = [];
+  for (const n of normalizeNameList(names || [])) {
+    const ov = parsePositive((overrideMap || {})[n]);
+    out.push({ name: n, limit: ov > 0 ? ov : globalLimit, custom: ov > 0 });
+  }
+  return out;
+}
 
-  rows.forEach((val, idx) => {
+function byNameMap(items) {
+  const m = {};
+  for (const it of items || []) {
+    m[it.name] = it.limit;
+  }
+  return m;
+}
+
+function renderBox(kind) {
+  const box = document.getElementById(kind === 'commands' ? 'cmdBox' : 'grpBox');
+  const items = state.draft[kind];
+  const globalLimit = kind === 'commands' ? state.globalLimits.command : state.globalLimits.group;
+  const namePlaceholder = kind === 'commands' ? '输入命令名' : '输入程序组名';
+  box.innerHTML = '';
+
+  items.forEach((it, idx) => {
     const row = document.createElement('div');
-    row.className = 'row';
+    row.className = 'token-row';
 
-    const mark = document.createElement('div');
-    mark.className = 'mark' + (val.trim() ? ' ok' : '');
-    mark.textContent = val.trim() ? '✓' : '○';
-
-    const input = document.createElement('input');
-    input.className = 'input';
-    input.type = 'text';
-    input.value = val;
-    input.placeholder = placeholder;
-    input.addEventListener('input', () => {
-      state.draft[key][idx] = input.value;
-      if (idx === state.draft[key].length - 1 && input.value.trim() !== '') {
-        state.draft[key].push('');
-        renderEditors();
-        return;
-      }
-      mark.className = 'mark' + (input.value.trim() ? ' ok' : '');
-      mark.textContent = input.value.trim() ? '✓' : '○';
+    const name = document.createElement('input');
+    name.className = 'input';
+    name.type = 'text';
+    name.value = it.name;
+    name.placeholder = namePlaceholder;
+    name.addEventListener('input', () => {
+      state.draft[kind][idx].name = name.value;
     });
 
-    const minus = document.createElement('button');
-    minus.className = 'minus';
-    minus.textContent = '−';
-    minus.disabled = rows.length <= 1;
-    minus.addEventListener('click', () => {
-      state.draft[key].splice(idx, 1);
+    const limit = document.createElement('input');
+    limit.className = 'input num';
+    limit.type = 'number';
+    limit.min = '0.1';
+    limit.step = '0.1';
+    limit.value = it.custom ? fmtGiB(it.limit || globalLimit) : '';
+    limit.placeholder = fmtGiB(globalLimit);
+    limit.title = 'GiB';
+    limit.addEventListener('input', () => {
+      const n = parsePositive(limit.value);
+      state.draft[kind][idx].custom = n > 0;
+      state.draft[kind][idx].limit = n > 0 ? n : globalLimit;
+    });
+
+    const x = document.createElement('button');
+    x.className = 'xbtn';
+    x.textContent = 'x';
+    x.title = '删除';
+    x.addEventListener('click', () => {
+      state.draft[kind].splice(idx, 1);
       renderEditors();
     });
 
-    row.appendChild(mark);
-    row.appendChild(input);
-    row.appendChild(minus);
-    wrap.appendChild(row);
+    row.appendChild(name);
+    row.appendChild(limit);
+    row.appendChild(x);
+    box.appendChild(row);
   });
+
+  const add = document.createElement('div');
+  add.className = 'token-row add';
+
+  const addName = document.createElement('input');
+  addName.className = 'input';
+  addName.type = 'text';
+  addName.placeholder = namePlaceholder + '（新增）';
+
+  const addLimit = document.createElement('input');
+  addLimit.className = 'input num';
+  addLimit.type = 'number';
+  addLimit.min = '0.1';
+  addLimit.step = '0.1';
+  addLimit.placeholder = 'GiB';
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'plus';
+  addBtn.textContent = '+';
+  addBtn.title = '添加';
+  addBtn.addEventListener('click', () => {
+    const name = normalizeName(addName.value);
+    if (!name) return;
+    const limitVal = parsePositive(addLimit.value);
+    const custom = limitVal > 0;
+    const limit = custom ? limitVal : globalLimit;
+    const existing = state.draft[kind].find((x) => normalizeName(x.name) === name);
+    if (existing) {
+      existing.limit = limit;
+      existing.custom = custom;
+    } else {
+      state.draft[kind].push({ name, limit, custom });
+    }
+    renderEditors();
+  });
+  addName.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addBtn.click();
+  });
+  addLimit.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addBtn.click();
+  });
+
+  add.appendChild(addName);
+  add.appendChild(addLimit);
+  add.appendChild(addBtn);
+  box.appendChild(add);
 }
 
 function renderEditors() {
-  renderRows('commands', 'cmdRows', '输入命令名');
-  renderRows('groups', 'grpRows', '输入程序组名');
+  renderBox('commands');
+  renderBox('groups');
 }
 
 function renderLists() {
-  document.getElementById('effectiveCommands').textContent = (state.effective.commands || []).join('\n');
-  document.getElementById('effectiveGroups').textContent = (state.effective.groups || []).join('\n');
+  const cmdMap = state.effectiveLimits.commands || {};
+  const grpMap = state.effectiveLimits.groups || {};
+  document.getElementById('effectiveCommands').textContent =
+    (state.effective.commands || []).map((n) => n + '  (' + fmtGiB(cmdMap[n] || state.activeLimits.command) + 'GiB)').join('\n');
+  document.getElementById('effectiveGroups').textContent =
+    (state.effective.groups || []).map((n) => n + '  (' + fmtGiB(grpMap[n] || state.activeLimits.group) + 'GiB)').join('\n');
   document.getElementById('defaultCommands').textContent = (state.defaults.commands || []).join('\n');
   document.getElementById('defaultGroups').textContent = (state.defaults.groups || []).join('\n');
 }
 
 function setFromRuleState(data) {
-  state.defaults.commands = normalizeList(data.defaultCommands || []);
-  state.defaults.groups = normalizeList(data.defaultGroups || []);
-  state.effective.commands = normalizeList(data.effectiveCommands || []);
-  state.effective.groups = normalizeList(data.effectiveGroups || []);
-  state.draft.commands = state.effective.commands.slice();
-  state.draft.groups = state.effective.groups.slice();
+  state.defaults.commands = normalizeNameList(data.defaultCommands || []);
+  state.defaults.groups = normalizeNameList(data.defaultGroups || []);
+  state.effective.commands = normalizeNameList(data.effectiveCommands || []);
+  state.effective.groups = normalizeNameList(data.effectiveGroups || []);
+
+  state.baseLimits.command = parsePositive(data.baseCommandLimitGiB) || parsePositive(data.commandLimitGiB) || 2;
+  state.baseLimits.group = parsePositive(data.baseGroupLimitGiB) || parsePositive(data.groupLimitGiB) || 6;
+  state.activeLimits.command = parsePositive(data.commandLimitGiB) || state.baseLimits.command;
+  state.activeLimits.group = parsePositive(data.groupLimitGiB) || state.baseLimits.group;
+  state.globalLimits.command = state.activeLimits.command;
+  state.globalLimits.group = state.activeLimits.group;
+
+  state.effectiveLimits.commands = data.commandLimitsGiB || {};
+  state.effectiveLimits.groups = data.groupLimitsGiB || {};
+  state.draft.commands = itemsFromNames(state.effective.commands, state.effectiveLimits.commands, state.globalLimits.command);
+  state.draft.groups = itemsFromNames(state.effective.groups, state.effectiveLimits.groups, state.globalLimits.group);
+
+  document.getElementById('globalCommandLimit').value = fmtGiB(state.globalLimits.command);
+  document.getElementById('globalGroupLimit').value = fmtGiB(state.globalLimits.group);
+  document.getElementById('baseLimitsHint').innerHTML =
+    '环境默认上限: 命令 ' + fmtGiB(state.baseLimits.command) + 'GiB / 程序组 ' + fmtGiB(state.baseLimits.group) +
+    'GiB。若与此不同，保存后将写入 rules.json 的 limits override。';
   renderLists();
   renderEditors();
   document.getElementById('meta').textContent = '规则文件: ' + (data.configPath || '(not set)');
 }
 
-function toLowerSet(arr) {
-  return new Set((arr || []).map(v => v.toLowerCase()));
+function toSet(arr) {
+  return new Set(normalizeNameList(arr));
 }
 
 function computePatchFromDraft() {
-  const targetCommands = normalizeList(state.draft.commands);
-  const targetGroups = normalizeList(state.draft.groups);
+  const globalCommand = parsePositive(document.getElementById('globalCommandLimit').value) || state.baseLimits.command;
+  const globalGroup = parsePositive(document.getElementById('globalGroupLimit').value) || state.baseLimits.group;
+
+  const targetCommands = normalizeItems(state.draft.commands, globalCommand);
+  const targetGroups = normalizeItems(state.draft.groups, globalGroup);
+
+  const targetCommandNames = targetCommands.map((x) => x.name);
+  const targetGroupNames = targetGroups.map((x) => x.name);
   const defaultCommands = state.defaults.commands;
   const defaultGroups = state.defaults.groups;
 
-  const targetCommandSet = toLowerSet(targetCommands);
-  const targetGroupSet = toLowerSet(targetGroups);
-  const defaultCommandSet = toLowerSet(defaultCommands);
-  const defaultGroupSet = toLowerSet(defaultGroups);
+  const targetCommandSet = toSet(targetCommandNames);
+  const targetGroupSet = toSet(targetGroupNames);
+  const defaultCommandSet = toSet(defaultCommands);
+  const defaultGroupSet = toSet(defaultGroups);
+
+  const cmdLimitsGiB = {};
+  for (const it of targetCommands) {
+    if (it.custom && Math.abs(it.limit - globalCommand) > EPS) {
+      cmdLimitsGiB[it.name] = roundGiB(it.limit);
+    }
+  }
+
+  const grpLimitsGiB = {};
+  for (const it of targetGroups) {
+    if (it.custom && Math.abs(it.limit - globalGroup) > EPS) {
+      grpLimitsGiB[it.name] = roundGiB(it.limit);
+    }
+  }
 
   return {
+    limits: {
+      commandGiB: Math.abs(globalCommand - state.baseLimits.command) > EPS ? roundGiB(globalCommand) : 0,
+      groupGiB: Math.abs(globalGroup - state.baseLimits.group) > EPS ? roundGiB(globalGroup) : 0,
+    },
     commands: {
-      add: targetCommands.filter(v => !defaultCommandSet.has(v.toLowerCase())),
-      remove: defaultCommands.filter(v => !targetCommandSet.has(v.toLowerCase())),
+      add: targetCommandNames.filter((v) => !defaultCommandSet.has(v)),
+      remove: defaultCommands.filter((v) => !targetCommandSet.has(v)),
+      limitsGiB: cmdLimitsGiB,
     },
     groups: {
-      add: targetGroups.filter(v => !defaultGroupSet.has(v.toLowerCase())),
-      remove: defaultGroups.filter(v => !targetGroupSet.has(v.toLowerCase())),
+      add: targetGroupNames.filter((v) => !defaultGroupSet.has(v)),
+      remove: defaultGroups.filter((v) => !targetGroupSet.has(v)),
+      limitsGiB: grpLimitsGiB,
     },
   };
 }
@@ -498,8 +680,26 @@ async function savePatch(patch, okText) {
 }
 
 document.getElementById('saveBtn').addEventListener('click', async () => {
-  await savePatch(computePatchFromDraft(), '规则已保存');
+  const patch = computePatchFromDraft();
+  await savePatch(patch, '规则已保存');
 });
+
+function applyGlobalDraftLimits() {
+  const gc = parsePositive(document.getElementById('globalCommandLimit').value) || state.baseLimits.command;
+  const gg = parsePositive(document.getElementById('globalGroupLimit').value) || state.baseLimits.group;
+  state.globalLimits.command = gc;
+  state.globalLimits.group = gg;
+  state.draft.commands.forEach((it) => {
+    if (!it.custom) it.limit = gc;
+  });
+  state.draft.groups.forEach((it) => {
+    if (!it.custom) it.limit = gg;
+  });
+  renderEditors();
+}
+
+document.getElementById('globalCommandLimit').addEventListener('input', applyGlobalDraftLimits);
+document.getElementById('globalGroupLimit').addEventListener('input', applyGlobalDraftLimits);
 
 document.getElementById('reloadBtn').addEventListener('click', async () => {
   await loadRules();
@@ -508,7 +708,11 @@ document.getElementById('reloadBtn').addEventListener('click', async () => {
 });
 
 document.getElementById('restoreBtn').addEventListener('click', async () => {
-  const patch = { commands: { add: [], remove: [] }, groups: { add: [], remove: [] } };
+  const patch = {
+    limits: { commandGiB: 0, groupGiB: 0 },
+    commands: { add: [], remove: [], limitsGiB: {} },
+    groups: { add: [], remove: [], limitsGiB: {} },
+  };
   await savePatch(patch, '已恢复默认规则');
 });
 

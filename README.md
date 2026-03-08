@@ -56,7 +56,7 @@ go build -o remem.exe ./cmd/remem
 发布包构建（Windows 自动无黑框）：
 
 ```bash
-bash ./scripts/release.sh v0.3.3
+bash ./scripts/release.sh v0.3.4
 ```
 
 ## 配置
@@ -96,6 +96,12 @@ REMEM_EXTRA_GROUPS="brave,opera"
 - Windows: `%AppData%\\remem\\rules.json`
 
 也可通过 `REMEM_CONFIG_PATH` 指定。
+
+支持的关键字段：
+
+- `limits.commandGiB` / `limits.groupGiB`：覆盖全局命令/程序组上限
+- `commands.limitsGiB.<name>`：给单个命令设置上限（GiB）
+- `groups.limitsGiB.<name>`：给单个程序组设置上限（GiB）
 
 格式参考：`docs/config.example.json`
 
