@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.7 - 2026-03-09
+
+- Added real-time save-state hint to rules action button:
+  - `保存并立即生效（所有更改已保存）`
+  - `保存并立即生效（存在未提交更改）`
+- Save-state now updates automatically on all edits:
+  - name edits
+  - per-item limit edits
+  - add/remove item operations
+  - global limit changes
+- Save-state compares canonicalized current draft with last persisted custom patch.
+
 ## v0.3.6 - 2026-03-08
 
 - Changed rules-page action bar from sticky to true floating fixed toolbar on desktop.
