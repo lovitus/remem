@@ -5,21 +5,21 @@
 1. Build artifacts and checksums:
 
 ```bash
-bash ./scripts/release.sh v0.3.8
+bash ./scripts/release.sh v0.3.9
 ```
 
 2. Push code and tag:
 
 ```bash
 git push origin main
-git tag v0.3.8
-git push origin v0.3.8
+git tag v0.3.9
+git push origin v0.3.9
 ```
 
 3. Create GitHub release:
 
 ```bash
-gh release create v0.3.8 dist/release/* --title "v0.3.8" --notes-file CHANGELOG.md
+gh release create v0.3.9 dist/release/* --title "v0.3.9" --notes-file CHANGELOG.md
 ```
 
 ## GitHub Actions release

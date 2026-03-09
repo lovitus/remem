@@ -2,6 +2,18 @@
 
 ## macOS
 
+### Install from DMG (recommended for end users)
+
+1. Download `remem-macos-arm64-v*.dmg` from Release.
+2. Open the DMG and drag `remem.app` to `Applications`.
+3. If Gatekeeper blocks launch, run:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/remem.app"
+```
+
+4. Then open `System Settings -> Privacy & Security -> Open Anyway`.
+
 ### Build
 
 ```bash

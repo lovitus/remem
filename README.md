@@ -43,6 +43,18 @@ Cross-platform memory guard for macOS and Windows.
 go run ./cmd/remem
 ```
 
+## macOS 安装（DMG）
+
+- 在 Release 下载 `remem-macos-arm64-v*.dmg`
+- 双击打开后，把 `remem.app` 拖到 `Applications`
+- 首次被拦截时可执行：
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/remem.app"
+```
+
+- 然后去 `System Settings -> Privacy & Security` 点击 `Open Anyway`
+
 ## 构建
 
 ```bash
@@ -56,7 +68,7 @@ go build -o remem.exe ./cmd/remem
 发布包构建（Windows 自动无黑框）：
 
 ```bash
-bash ./scripts/release.sh v0.3.8
+bash ./scripts/release.sh v0.3.9
 ```
 
 ## 配置

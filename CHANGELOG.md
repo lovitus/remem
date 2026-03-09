@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.3.9 - 2026-03-09
+
+- Added macOS installable package output in release pipeline:
+  - `remem.app` bundle is generated automatically
+  - `remem-macos-arm64-v*.dmg` is generated and uploaded to Release
+- DMG now includes:
+  - `remem.app`
+  - `Applications` shortcut for drag-install
+  - `Read Me First.txt` with Gatekeeper/xattr instructions
+- Added end-user docs for:
+  - removing quarantine flag via `xattr`
+  - allowing launch via `System Settings -> Privacy & Security -> Open Anyway`
+
 ## v0.3.8 - 2026-03-09
 
 - Reverted the previous save-state hint patch on the rules page.
