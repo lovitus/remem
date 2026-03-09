@@ -352,7 +352,7 @@ const rulesHTML = `<!doctype html>
       <div class="sub" id="meta"></div>
     </div>
     <div class="ops">
-      <button class="btn save" id="saveBtn">保存并立即生效（所有更改已保存）</button>
+      <button class="btn save" id="saveBtn">保存并立即生效</button>
       <button class="btn reload" id="reloadBtn">重新加载当前生效内容</button>
       <button class="btn restore" id="restoreBtn">恢复默认并生效</button>
     </div>
@@ -428,7 +428,6 @@ const state = {
   effective: { commands: [], groups: [] },
   effectiveLimits: { commands: {}, groups: {} },
   draft: { commands: [], groups: [] },
-  savedPatchSignature: '',
 };
 
 function normalizeName(v) {
@@ -513,7 +512,6 @@ function renderBox(kind) {
     name.placeholder = namePlaceholder;
     name.addEventListener('input', () => {
       state.draft[kind][idx].name = name.value;
-      refreshSaveButtonState();
     });
 
     const limit = document.createElement('input');
@@ -528,7 +526,6 @@ function renderBox(kind) {
       const n = parsePositive(limit.value);
       state.draft[kind][idx].custom = n > 0;
       state.draft[kind][idx].limit = n > 0 ? n : globalLimit;
-      refreshSaveButtonState();
     });
 
     const x = document.createElement('button');
@@ -538,7 +535,6 @@ function renderBox(kind) {
     x.addEventListener('click', () => {
       state.draft[kind].splice(idx, 1);
       renderEditors();
-      refreshSaveButtonState();
     });
 
     row.appendChild(name);
@@ -580,7 +576,6 @@ function renderBox(kind) {
       state.draft[kind].push({ name, limit, custom });
     }
     renderEditors();
-    refreshSaveButtonState();
   });
   addName.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') addBtn.click();
@@ -628,7 +623,6 @@ function setFromRuleState(data) {
   state.effectiveLimits.groups = data.groupLimitsGiB || {};
   state.draft.commands = itemsFromNames(state.effective.commands, state.effectiveLimits.commands, state.globalLimits.command);
   state.draft.groups = itemsFromNames(state.effective.groups, state.effectiveLimits.groups, state.globalLimits.group);
-  state.savedPatchSignature = patchSignature(data.customPatch || {});
 
   document.getElementById('globalCommandLimit').value = fmtGiB(state.globalLimits.command);
   document.getElementById('globalGroupLimit').value = fmtGiB(state.globalLimits.group);
@@ -638,7 +632,6 @@ function setFromRuleState(data) {
   renderLists();
   renderEditors();
   document.getElementById('meta').textContent = '规则文件: ' + (data.configPath || '(not set)');
-  refreshSaveButtonState();
 }
 
 function toSet(arr) {
@@ -694,58 +687,6 @@ function computePatchFromDraft() {
   };
 }
 
-function canonicalLimitMap(in) {
-  const tmp = {};
-  for (const k of Object.keys(in || {})) {
-    const name = normalizeName(k);
-    const v = roundGiB(parsePositive(in[k]));
-    if (!name || v <= 0) continue;
-    tmp[name] = v;
-  }
-  const out = {};
-  for (const k of Object.keys(tmp).sort()) {
-    out[k] = tmp[k];
-  }
-  return out;
-}
-
-function canonicalPatch(patch) {
-  const p = patch || {};
-  const limits = p.limits || {};
-  const commands = p.commands || {};
-  const groups = p.groups || {};
-  return {
-    limits: {
-      commandGiB: roundGiB(parsePositive(limits.commandGiB)),
-      groupGiB: roundGiB(parsePositive(limits.groupGiB)),
-    },
-    commands: {
-      add: normalizeNameList(commands.add || []).sort(),
-      remove: normalizeNameList(commands.remove || []).sort(),
-      limitsGiB: canonicalLimitMap(commands.limitsGiB || {}),
-    },
-    groups: {
-      add: normalizeNameList(groups.add || []).sort(),
-      remove: normalizeNameList(groups.remove || []).sort(),
-      limitsGiB: canonicalLimitMap(groups.limitsGiB || {}),
-    },
-  };
-}
-
-function patchSignature(patch) {
-  return JSON.stringify(canonicalPatch(patch));
-}
-
-function refreshSaveButtonState() {
-  const btn = document.getElementById('saveBtn');
-  if (!btn) return;
-  const currentSig = patchSignature(computePatchFromDraft());
-  const dirty = currentSig !== state.savedPatchSignature;
-  btn.textContent = dirty
-    ? '保存并立即生效（存在未提交更改）'
-    : '保存并立即生效（所有更改已保存）';
-}
-
 async function loadRules() {
   const res = await fetch('/api/rules', { cache: 'no-store' });
   if (!res.ok) {
@@ -788,7 +729,6 @@ function applyGlobalDraftLimits() {
     if (!it.custom) it.limit = gg;
   });
   renderEditors();
-  refreshSaveButtonState();
 }
 
 document.getElementById('globalCommandLimit').addEventListener('input', applyGlobalDraftLimits);
