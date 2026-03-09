@@ -56,7 +56,7 @@ go build -o remem.exe ./cmd/remem
 发布包构建（Windows 自动无黑框）：
 
 ```bash
-bash ./scripts/release.sh v0.3.6
+bash ./scripts/release.sh v0.3.8
 ```
 
 ## 配置

@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.8 - 2026-03-09
+
+- Reverted the previous save-state hint patch on the rules page.
+- Fixed regression where some environments rendered rules page blank after that patch.
+- Restored stable `v0.3.6` rules page behavior.
+
 ## v0.3.6 - 2026-03-08
 
 - Changed rules-page action bar from sticky to true floating fixed toolbar on desktop.
