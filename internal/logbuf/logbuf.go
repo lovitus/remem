@@ -89,7 +89,7 @@ func (b *Buffer) AddRoutine(message string) {
 func (b *Buffer) addImportant(kind Kind, message string) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	entry := Entry{Time: time.Now().Format("15:04:05"), Kind: kind, Message: message}
+	entry := Entry{Time: time.Now().Format("2006-01-02 15:04:05"), Kind: kind, Message: message}
 	b.important = append(b.important, entry)
 	if len(b.important) > b.importantMax {
 		b.important = append([]Entry(nil), b.important[len(b.important)-b.importantMax:]...)

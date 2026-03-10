@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.3.10 - 2026-03-10
+
+- Important logs now include full date and time (`YYYY-MM-DD HH:MM:SS`).
+- Kill/action/error records can now be traced across days directly from log viewer.
+
 ## v0.3.9 - 2026-03-09
 
 - Added macOS installable package output in release pipeline:

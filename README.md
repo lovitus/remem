@@ -35,7 +35,7 @@ Cross-platform memory guard for macOS and Windows.
 - `Edit Rules` 保存后立即生效，并持久化到规则文件。
 - 日志只在内存中保存，不写盘：
   - `Routine Scan Logs` 仅保留最近 10 行（可通过 `REMEM_ROUTINE_LOG_LINES` 调整）
-  - `Important Logs`（action/error/kill）保留最近 100 行（可通过 `REMEM_IMPORTANT_LOG_LINES` 调整）
+  - `Important Logs`（action/error/kill）保留最近 100 行并显示完整日期时间（可通过 `REMEM_IMPORTANT_LOG_LINES` 调整）
 
 ## 快速开始
 
@@ -68,7 +68,7 @@ go build -o remem.exe ./cmd/remem
 发布包构建（Windows 自动无黑框）：
 
 ```bash
-bash ./scripts/release.sh v0.3.9
+bash ./scripts/release.sh v0.3.10
 ```
 
 ## 配置

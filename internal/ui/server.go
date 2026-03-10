@@ -125,7 +125,7 @@ const indexHTML = `<!doctype html>
   <div class="meta"><a href="/rules">Open Rules Editor</a></div>
   <div class="wrap">
     <div class="card">
-      <div class="title">Important Logs (action/error/kill, rolling 100 lines)</div>
+      <div class="title">Important Logs (action/error/kill, with date, rolling 100 lines)</div>
       <div class="logs" id="imp">loading...</div>
     </div>
     <div class="card">
