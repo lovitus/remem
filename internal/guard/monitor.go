@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/shirou/gopsutil/v4/process"
@@ -40,6 +41,16 @@ type RuleState struct {
 	GroupLimitsGiB      map[string]float64 `json:"groupLimitsGiB"`
 }
 
+type ruleSnapshot struct {
+	commandWatchlist map[string]struct{}
+	groups           []config.GroupSpec
+	commandLimit     uint64
+	groupLimit       uint64
+	commandLimits    map[string]uint64
+	groupLimits      map[string]uint64
+	ruleState        RuleState
+}
+
 type Monitor struct {
 	cfg       config.Config
 	logs      *logbuf.Buffer
@@ -48,34 +59,24 @@ type Monitor struct {
 	statsMu sync.RWMutex
 	stats   Stats
 
-	rulesMu          sync.RWMutex
-	commandWatchlist map[string]struct{}
-	groups           []config.GroupSpec
-	commandLimit     uint64
-	groupLimit       uint64
-	commandLimits    map[string]uint64
-	groupLimits      map[string]uint64
-	customPatch      config.FileConfig
-	groupCursor      int
-	hotGroups        map[string]time.Time
+	rules atomic.Pointer[ruleSnapshot]
+
+	heatMu      sync.Mutex
+	groupCursor int
+	hotGroups   map[string]time.Time
 }
 
 func New(cfg config.Config, logs *logbuf.Buffer) *Monitor {
 	customPatch := config.NormalizeFileConfig(cfg.CustomPatch)
-	commandLimit, groupLimit, commandLimits, groupLimits := config.BuildLimitSet(cfg.CommandLimitBytes, cfg.GroupLimitBytes, customPatch, cfg.CommandWatchlist, cfg.Groups)
-	return &Monitor{
-		cfg:              cfg,
-		logs:             logs,
-		triggerCh:        make(chan string, 1),
-		commandWatchlist: cloneCommandSet(cfg.CommandWatchlist),
-		groups:           cloneGroups(cfg.Groups),
-		commandLimit:     commandLimit,
-		groupLimit:       groupLimit,
-		commandLimits:    commandLimits,
-		groupLimits:      groupLimits,
-		customPatch:      customPatch,
-		hotGroups:        make(map[string]time.Time),
+	snap := buildRuleSnapshot(cfg, customPatch, cfg.CommandWatchlist, cfg.Groups)
+	m := &Monitor{
+		cfg:       cfg,
+		logs:      logs,
+		triggerCh: make(chan string, 1),
+		hotGroups: make(map[string]time.Time),
 	}
+	m.rules.Store(snap)
+	return m
 }
 
 func (m *Monitor) Start(ctx context.Context) {
@@ -123,25 +124,20 @@ func (m *Monitor) TriggerScan(source string) {
 func (m *Monitor) UpdateCustomPatch(patch config.FileConfig, persist bool) error {
 	patch = config.NormalizeFileConfig(patch)
 	commands, groups := config.BuildRuleSet(m.cfg.EnvPatch, patch)
-	commandLimit, groupLimit, commandLimits, groupLimits := config.BuildLimitSet(m.cfg.CommandLimitBytes, m.cfg.GroupLimitBytes, patch, commands, groups)
 	if persist {
 		if err := config.SaveFileConfig(m.cfg.ConfigPath, patch); err != nil {
 			return err
 		}
 	}
 
-	m.rulesMu.Lock()
-	m.commandWatchlist = cloneCommandSet(commands)
-	m.groups = cloneGroups(groups)
-	m.commandLimit = commandLimit
-	m.groupLimit = groupLimit
-	m.commandLimits = cloneUint64Map(commandLimits)
-	m.groupLimits = cloneUint64Map(groupLimits)
-	m.customPatch = patch
+	m.rules.Store(buildRuleSnapshot(m.cfg, patch, commands, groups))
+
+	m.heatMu.Lock()
 	m.groupCursor = 0
 	m.hotGroups = make(map[string]time.Time)
-	m.rulesMu.Unlock()
+	m.heatMu.Unlock()
 
+	commandLimit, groupLimit, _, _ := config.BuildLimitSet(m.cfg.CommandLimitBytes, m.cfg.GroupLimitBytes, patch, commands, groups)
 	m.logs.AddActionf("rules updated: commands=%d groups=%d command_limit=%s group_limit=%s", len(commands), len(groups), formatGiB(commandLimit), formatGiB(groupLimit))
 	if persist && m.cfg.ConfigPath != "" {
 		m.logs.AddActionf("rules persisted: %s", m.cfg.ConfigPath)
@@ -150,34 +146,8 @@ func (m *Monitor) UpdateCustomPatch(patch config.FileConfig, persist bool) error
 }
 
 func (m *Monitor) RuleState() RuleState {
-	m.rulesMu.RLock()
-	defer m.rulesMu.RUnlock()
-	groupNames := make([]string, 0, len(m.groups))
-	for _, g := range m.groups {
-		groupNames = append(groupNames, g.Name)
-	}
-	sort.Strings(groupNames)
-
-	commands := make([]string, 0, len(m.commandWatchlist))
-	for k := range m.commandWatchlist {
-		commands = append(commands, k)
-	}
-	sort.Strings(commands)
-	return RuleState{
-		ConfigPath:          m.cfg.ConfigPath,
-		EnvPatch:            m.cfg.EnvPatch,
-		CustomPatch:         m.customPatch,
-		DefaultCommands:     config.DefaultCommandNames(),
-		DefaultGroups:       config.DefaultGroupNames(),
-		EffectiveCommands:   commands,
-		EffectiveGroups:     groupNames,
-		BaseCommandLimitGiB: bytesToGiB(m.cfg.CommandLimitBytes),
-		BaseGroupLimitGiB:   bytesToGiB(m.cfg.GroupLimitBytes),
-		CommandLimitGiB:     bytesToGiB(m.commandLimit),
-		GroupLimitGiB:       bytesToGiB(m.groupLimit),
-		CommandLimitsGiB:    bytesMapToGiBMap(m.commandLimits),
-		GroupLimitsGiB:      bytesMapToGiBMap(m.groupLimits),
-	}
+	snap := m.currentRules()
+	return cloneRuleState(snap.ruleState)
 }
 
 func (m *Monitor) runScan(source string) {
@@ -188,9 +158,9 @@ func (m *Monitor) runScan(source string) {
 
 func (m *Monitor) scan(source string) {
 	start := time.Now()
-	commands, groupsToScan, commandLimit, groupLimit, commandLimits, groupLimits := m.snapshotRulesForScan(source)
+	rules, groupsToScan := m.snapshotRulesForScan(source)
 
-	procs, byPID, children, err := snapshotProcesses(commands, groupsToScan)
+	procs, byPID, children, err := snapshotProcesses(rules.commandWatchlist, groupsToScan)
 	if err != nil {
 		m.logs.AddErrorf("scan error (%s): %v", source, err)
 		m.updateStats(start, source, 0, 0, fmt.Sprintf("scan error: %v", err))
@@ -204,11 +174,11 @@ func (m *Monitor) scan(source string) {
 		if p.PID == int32(os.Getpid()) {
 			continue
 		}
-		if _, ok := commands[p.NameNorm]; !ok {
+		if _, ok := rules.commandWatchlist[p.NameNorm]; !ok {
 			continue
 		}
-		limit := commandLimit
-		if ov, ok := commandLimits[p.NameNorm]; ok && ov > 0 {
+		limit := rules.commandLimit
+		if ov, ok := rules.commandLimits[p.NameNorm]; ok && ov > 0 {
 			limit = ov
 		}
 		if p.RSSBytes <= limit {
@@ -223,13 +193,13 @@ func (m *Monitor) scan(source string) {
 	for _, g := range groupsToScan {
 		roots := findRootPIDs(g, byPID)
 		if len(roots) == 0 {
-			m.touchGroupHeat(g.Name, 0, groupLimit)
+			m.touchGroupHeat(g.Name, 0, rules.groupLimit)
 			continue
 		}
 
 		members := collectGroupMembers(roots, children, byPID)
 		if len(members) == 0 {
-			m.touchGroupHeat(g.Name, 0, groupLimit)
+			m.touchGroupHeat(g.Name, 0, rules.groupLimit)
 			continue
 		}
 
@@ -238,8 +208,8 @@ func (m *Monitor) scan(source string) {
 			total += p.RSSBytes
 		}
 
-		limit := groupLimit
-		if ov, ok := groupLimits[normalizeProcName(g.Name)]; ok && ov > 0 {
+		limit := rules.groupLimit
+		if ov, ok := rules.groupLimits[normalizeProcName(g.Name)]; ok && ov > 0 {
 			limit = ov
 		}
 
@@ -266,22 +236,18 @@ func (m *Monitor) scan(source string) {
 	m.updateStats(start, source, len(procs), killed, summary)
 }
 
-func (m *Monitor) snapshotRulesForScan(source string) (map[string]struct{}, []config.GroupSpec, uint64, uint64, map[string]uint64, map[string]uint64) {
-	m.rulesMu.Lock()
-	defer m.rulesMu.Unlock()
-
-	commands := cloneCommandSet(m.commandWatchlist)
-	allGroups := cloneGroups(m.groups)
-	commandLimit := m.commandLimit
-	groupLimit := m.groupLimit
-	commandLimits := cloneUint64Map(m.commandLimits)
-	groupLimits := cloneUint64Map(m.groupLimits)
+func (m *Monitor) snapshotRulesForScan(source string) (*ruleSnapshot, []config.GroupSpec) {
+	rules := m.currentRules()
+	allGroups := rules.groups
 	if len(allGroups) == 0 {
-		return commands, nil, commandLimit, groupLimit, commandLimits, groupLimits
+		return rules, nil
 	}
 	if source != "ticker" {
-		return commands, allGroups, commandLimit, groupLimit, commandLimits, groupLimits
+		return rules, allGroups
 	}
+
+	m.heatMu.Lock()
+	defer m.heatMu.Unlock()
 
 	now := time.Now()
 	for name, exp := range m.hotGroups {
@@ -292,7 +258,7 @@ func (m *Monitor) snapshotRulesForScan(source string) (map[string]struct{}, []co
 
 	perScan := m.cfg.GroupsPerScan
 	if perScan <= 0 || perScan >= len(allGroups) {
-		return commands, allGroups, commandLimit, groupLimit, commandLimits, groupLimits
+		return rules, allGroups
 	}
 
 	selected := make([]config.GroupSpec, 0, perScan+len(m.hotGroups))
@@ -317,22 +283,26 @@ func (m *Monitor) snapshotRulesForScan(source string) (map[string]struct{}, []co
 		selectedSet[g.Name] = struct{}{}
 	}
 
-	return commands, selected, commandLimit, groupLimit, commandLimits, groupLimits
+	return rules, selected
 }
 
 func (m *Monitor) touchGroupHeat(groupName string, total uint64, limit uint64) {
-	m.rulesMu.Lock()
-	defer m.rulesMu.Unlock()
+	m.heatMu.Lock()
+	defer m.heatMu.Unlock()
 	if m.cfg.GroupHotThresholdRate <= 0 || m.cfg.GroupHotTTL <= 0 {
 		return
-	}
-	if limit == 0 {
-		limit = m.groupLimit
 	}
 	threshold := uint64(float64(limit) * m.cfg.GroupHotThresholdRate)
 	if total >= threshold {
 		m.hotGroups[groupName] = time.Now().Add(m.cfg.GroupHotTTL)
 	}
+}
+
+func (m *Monitor) currentRules() *ruleSnapshot {
+	if snap := m.rules.Load(); snap != nil {
+		return snap
+	}
+	return &ruleSnapshot{}
 }
 
 func findRootPIDs(group config.GroupSpec, byPID map[int32]Proc) []int32 {
@@ -491,6 +461,70 @@ func bytesMapToGiBMap(in map[string]uint64) map[string]float64 {
 	out := make(map[string]float64, len(in))
 	for k, v := range in {
 		out[k] = bytesToGiB(v)
+	}
+	return out
+}
+
+func buildRuleSnapshot(cfg config.Config, patch config.FileConfig, commands map[string]struct{}, groups []config.GroupSpec) *ruleSnapshot {
+	commandLimit, groupLimit, commandLimits, groupLimits := config.BuildLimitSet(cfg.CommandLimitBytes, cfg.GroupLimitBytes, patch, commands, groups)
+
+	commandWatchlist := cloneCommandSet(commands)
+	groupSpecs := cloneGroups(groups)
+
+	groupNames := make([]string, 0, len(groupSpecs))
+	for _, g := range groupSpecs {
+		groupNames = append(groupNames, g.Name)
+	}
+	sort.Strings(groupNames)
+
+	commandNames := make([]string, 0, len(commandWatchlist))
+	for name := range commandWatchlist {
+		commandNames = append(commandNames, name)
+	}
+	sort.Strings(commandNames)
+
+	return &ruleSnapshot{
+		commandWatchlist: commandWatchlist,
+		groups:           groupSpecs,
+		commandLimit:     commandLimit,
+		groupLimit:       groupLimit,
+		commandLimits:    cloneUint64Map(commandLimits),
+		groupLimits:      cloneUint64Map(groupLimits),
+		ruleState: RuleState{
+			ConfigPath:          cfg.ConfigPath,
+			EnvPatch:            cfg.EnvPatch,
+			CustomPatch:         patch,
+			DefaultCommands:     config.DefaultCommandNames(),
+			DefaultGroups:       config.DefaultGroupNames(),
+			EffectiveCommands:   commandNames,
+			EffectiveGroups:     groupNames,
+			BaseCommandLimitGiB: bytesToGiB(cfg.CommandLimitBytes),
+			BaseGroupLimitGiB:   bytesToGiB(cfg.GroupLimitBytes),
+			CommandLimitGiB:     bytesToGiB(commandLimit),
+			GroupLimitGiB:       bytesToGiB(groupLimit),
+			CommandLimitsGiB:    bytesMapToGiBMap(commandLimits),
+			GroupLimitsGiB:      bytesMapToGiBMap(groupLimits),
+		},
+	}
+}
+
+func cloneRuleState(in RuleState) RuleState {
+	out := in
+	out.DefaultCommands = append([]string(nil), in.DefaultCommands...)
+	out.DefaultGroups = append([]string(nil), in.DefaultGroups...)
+	out.EffectiveCommands = append([]string(nil), in.EffectiveCommands...)
+	out.EffectiveGroups = append([]string(nil), in.EffectiveGroups...)
+	if len(in.CommandLimitsGiB) > 0 {
+		out.CommandLimitsGiB = make(map[string]float64, len(in.CommandLimitsGiB))
+		for k, v := range in.CommandLimitsGiB {
+			out.CommandLimitsGiB[k] = v
+		}
+	}
+	if len(in.GroupLimitsGiB) > 0 {
+		out.GroupLimitsGiB = make(map[string]float64, len(in.GroupLimitsGiB))
+		for k, v := range in.GroupLimitsGiB {
+			out.GroupLimitsGiB[k] = v
+		}
 	}
 	return out
 }
