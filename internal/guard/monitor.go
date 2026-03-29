@@ -203,13 +203,23 @@ func (m *Monitor) scan(source string) {
 	groupStart := time.Now()
 	for _, g := range groupsToScan {
 		roots := findRootPIDs(g, byPID, nameIndex)
+		limit := rules.groupLimit
+		if ov, ok := rules.groupLimits[normalizeProcName(g.Name)]; ok && ov > 0 {
+			limit = ov
+		}
 		if len(roots) == 0 {
+			if perfActive {
+				m.logs.AddActionf("[perf-group] source=%s group=%s roots=0 members=0 total=%s limit=%s hit=false", source, g.Name, formatGiB(0), formatGiB(limit))
+			}
 			m.touchGroupHeat(g.Name, 0, rules.groupLimit)
 			continue
 		}
 
 		members := collectGroupMembers(roots, children, byPID)
 		if len(members) == 0 {
+			if perfActive {
+				m.logs.AddActionf("[perf-group] source=%s group=%s roots=%d members=0 total=%s limit=%s hit=false", source, g.Name, len(roots), formatGiB(0), formatGiB(limit))
+			}
 			m.touchGroupHeat(g.Name, 0, rules.groupLimit)
 			continue
 		}
@@ -218,10 +228,8 @@ func (m *Monitor) scan(source string) {
 		for _, p := range members {
 			total += p.RSSBytes
 		}
-
-		limit := rules.groupLimit
-		if ov, ok := rules.groupLimits[normalizeProcName(g.Name)]; ok && ov > 0 {
-			limit = ov
+		if perfActive {
+			m.logs.AddActionf("[perf-group] source=%s group=%s roots=%d members=%d total=%s limit=%s hit=%t", source, g.Name, len(roots), len(members), formatGiB(total), formatGiB(limit), total > limit)
 		}
 
 		m.touchGroupHeat(g.Name, total, limit)
