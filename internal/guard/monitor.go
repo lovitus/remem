@@ -265,7 +265,7 @@ func (m *Monitor) scan(source string) {
 			groupDur.Truncate(time.Millisecond),
 			dur.Truncate(time.Millisecond),
 			procStats.ProcessesSeen,
-			len(procs),
+			procStats.RelevantCount,
 			len(groupsToScan),
 			killed,
 		)

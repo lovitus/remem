@@ -23,6 +23,7 @@ type procNameIndex map[string][]int32
 
 type ProcSnapshotStats struct {
 	ProcessesSeen int
+	RelevantCount int
 	List          time.Duration
 	Metadata      time.Duration
 	Index         time.Duration
@@ -63,6 +64,7 @@ func snapshotProcesses(commandWatchlist map[string]struct{}, groups []config.Gro
 			markSubtreeRelevant(root, children, relevant)
 		}
 	}
+	stats.RelevantCount = len(relevant)
 	stats.Relevant = time.Since(relevantStart)
 
 	rssStart := time.Now()
