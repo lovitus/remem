@@ -18,10 +18,12 @@ type Proc struct {
 	RSSBytes uint64
 }
 
-func snapshotProcesses(commandWatchlist map[string]struct{}, groups []config.GroupSpec) ([]Proc, map[int32]Proc, map[int32][]int32, error) {
+type procNameIndex map[string][]int32
+
+func snapshotProcesses(commandWatchlist map[string]struct{}, groups []config.GroupSpec) ([]Proc, map[int32]Proc, map[int32][]int32, procNameIndex, error) {
 	ps, err := process.Processes()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	out := make([]Proc, 0, len(ps))
@@ -52,6 +54,8 @@ func snapshotProcesses(commandWatchlist map[string]struct{}, groups []config.Gro
 		children[ppid] = append(children[ppid], pid)
 	}
 
+	nameIndex := buildProcNameIndex(byPID)
+
 	// Decide which processes actually need expensive RSS lookup.
 	relevant := make(map[int32]struct{}, len(byPID)/2)
 	for pid, p := range byPID {
@@ -60,7 +64,7 @@ func snapshotProcesses(commandWatchlist map[string]struct{}, groups []config.Gro
 		}
 	}
 	for _, g := range groups {
-		roots := findRootPIDs(g, byPID)
+		roots := findRootPIDs(g, byPID, nameIndex)
 		for _, root := range roots {
 			markSubtreeRelevant(root, children, relevant)
 		}
@@ -86,7 +90,7 @@ func snapshotProcesses(commandWatchlist map[string]struct{}, groups []config.Gro
 			out[i] = p
 		}
 	}
-	return out, byPID, children, nil
+	return out, byPID, children, nameIndex, nil
 }
 
 func markSubtreeRelevant(root int32, children map[int32][]int32, relevant map[int32]struct{}) {
@@ -108,4 +112,18 @@ func normalizeProcName(name string) string {
 	n := strings.ToLower(strings.TrimSpace(name))
 	n = strings.TrimSuffix(n, ".exe")
 	return n
+}
+
+func buildProcNameIndex(byPID map[int32]Proc) procNameIndex {
+	if len(byPID) == 0 {
+		return nil
+	}
+	index := make(procNameIndex, len(byPID))
+	for pid, p := range byPID {
+		if p.NameNorm == "" {
+			continue
+		}
+		index[p.NameNorm] = append(index[p.NameNorm], pid)
+	}
+	return index
 }

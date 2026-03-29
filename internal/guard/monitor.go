@@ -160,7 +160,7 @@ func (m *Monitor) scan(source string) {
 	start := time.Now()
 	rules, groupsToScan := m.snapshotRulesForScan(source)
 
-	procs, byPID, children, err := snapshotProcesses(rules.commandWatchlist, groupsToScan)
+	procs, byPID, children, nameIndex, err := snapshotProcesses(rules.commandWatchlist, groupsToScan)
 	if err != nil {
 		m.logs.AddErrorf("scan error (%s): %v", source, err)
 		m.updateStats(start, source, 0, 0, fmt.Sprintf("scan error: %v", err))
@@ -191,7 +191,7 @@ func (m *Monitor) scan(source string) {
 	}
 
 	for _, g := range groupsToScan {
-		roots := findRootPIDs(g, byPID)
+		roots := findRootPIDs(g, byPID, nameIndex)
 		if len(roots) == 0 {
 			m.touchGroupHeat(g.Name, 0, rules.groupLimit)
 			continue
@@ -305,11 +305,13 @@ func (m *Monitor) currentRules() *ruleSnapshot {
 	return &ruleSnapshot{}
 }
 
-func findRootPIDs(group config.GroupSpec, byPID map[int32]Proc) []int32 {
+func findRootPIDs(group config.GroupSpec, byPID map[int32]Proc, nameIndex procNameIndex) []int32 {
 	matched := make(map[int32]Proc)
-	for pid, p := range byPID {
-		if groupRootMatch(group, p) {
-			matched[pid] = p
+	for _, matcher := range group.RootMatchers {
+		for _, pid := range matchProcIDs(matcher, byPID, nameIndex) {
+			if p, ok := byPID[pid]; ok {
+				matched[pid] = p
+			}
 		}
 	}
 	if len(matched) == 0 {
@@ -329,6 +331,40 @@ func findRootPIDs(group config.GroupSpec, byPID map[int32]Proc) []int32 {
 	}
 	sort.Slice(roots, func(i, j int) bool { return roots[i] < roots[j] })
 	return roots
+}
+
+func matchProcIDs(matcher config.Matcher, byPID map[int32]Proc, nameIndex procNameIndex) []int32 {
+	seen := make(map[int32]struct{})
+	matched := make([]int32, 0, 8)
+	if len(nameIndex) == 0 {
+		for pid, p := range byPID {
+			if !matcherMatches(matcher, p) {
+				continue
+			}
+			if _, ok := seen[pid]; ok {
+				continue
+			}
+			seen[pid] = struct{}{}
+			matched = append(matched, pid)
+		}
+		return matched
+	}
+	for nameNorm, pids := range nameIndex {
+		if !matcherMatches(matcher, Proc{NameNorm: nameNorm}) {
+			continue
+		}
+		for _, pid := range pids {
+			if _, ok := byPID[pid]; !ok {
+				continue
+			}
+			if _, ok := seen[pid]; ok {
+				continue
+			}
+			seen[pid] = struct{}{}
+			matched = append(matched, pid)
+		}
+	}
+	return matched
 }
 
 func collectGroupMembers(roots []int32, children map[int32][]int32, byPID map[int32]Proc) []Proc {
