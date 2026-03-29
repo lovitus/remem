@@ -35,6 +35,7 @@ func onReady(opts TrayOptions) {
 	mOpenLog := systray.AddMenuItem("Open Live Logs", "Open in-memory logs")
 	mEditRules := systray.AddMenuItem("Edit Rules", "Open rules editor")
 	mForceScan := systray.AddMenuItem("Force Scan Now", "Trigger a scan immediately")
+	mCollectPerf := systray.AddMenuItem("Collect 10s Perf Data", "Collect performance logs for 10 seconds and open the log viewer")
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Quit remem")
 
@@ -53,6 +54,8 @@ func onReady(opts TrayOptions) {
 	}()
 
 	go func() {
+		var perfReset <-chan time.Time
+		var perfTimer *time.Timer
 		for {
 			select {
 			case <-mOpenLog.ClickedCh:
@@ -68,6 +71,27 @@ func onReady(opts TrayOptions) {
 			case <-mForceScan.ClickedCh:
 				opts.Logs.AddActionf("manual scan requested")
 				opts.Monitor.TriggerScan("manual")
+			case <-mCollectPerf.ClickedCh:
+				until := opts.Monitor.StartPerfCapture(10 * time.Second)
+				opts.Logs.AddActionf("perf capture enabled for 10s until %s", until.Format("2006-01-02 15:04:05"))
+				opts.Monitor.TriggerScan("perf_capture")
+				if err := openBrowser(opts.LogUIURL); err != nil {
+					opts.Logs.AddErrorf("open browser failed: %v", err)
+				}
+				mCollectPerf.SetTitle("Collect 10s Perf Data (running)")
+				if perfTimer != nil {
+					if !perfTimer.Stop() {
+						select {
+						case <-perfTimer.C:
+						default:
+						}
+					}
+				}
+				perfTimer = time.NewTimer(10 * time.Second)
+				perfReset = perfTimer.C
+			case <-perfReset:
+				mCollectPerf.SetTitle("Collect 10s Perf Data")
+				perfReset = nil
 			case <-mQuit.ClickedCh:
 				opts.Logs.AddActionf("tray quit requested")
 				systray.Quit()

@@ -64,6 +64,9 @@ type Monitor struct {
 	heatMu      sync.Mutex
 	groupCursor int
 	hotGroups   map[string]time.Time
+
+	perfMu    sync.Mutex
+	perfUntil time.Time
 }
 
 func New(cfg config.Config, logs *logbuf.Buffer) *Monitor {
@@ -158,9 +161,14 @@ func (m *Monitor) runScan(source string) {
 
 func (m *Monitor) scan(source string) {
 	start := time.Now()
+	perfActive := m.perfCaptureActive(start)
+	rulesStart := time.Now()
 	rules, groupsToScan := m.snapshotRulesForScan(source)
+	rulesDur := time.Since(rulesStart)
 
-	procs, byPID, children, nameIndex, err := snapshotProcesses(rules.commandWatchlist, groupsToScan)
+	procStart := time.Now()
+	procs, byPID, children, nameIndex, procStats, err := snapshotProcesses(rules.commandWatchlist, groupsToScan)
+	procDur := time.Since(procStart)
 	if err != nil {
 		m.logs.AddErrorf("scan error (%s): %v", source, err)
 		m.updateStats(start, source, 0, 0, fmt.Sprintf("scan error: %v", err))
@@ -170,6 +178,7 @@ func (m *Monitor) scan(source string) {
 	killedPIDs := make(map[int32]struct{})
 	killed := 0
 
+	commandStart := time.Now()
 	for _, p := range procs {
 		if p.PID == int32(os.Getpid()) {
 			continue
@@ -189,7 +198,9 @@ func (m *Monitor) scan(source string) {
 			killed++
 		}
 	}
+	commandDur := time.Since(commandStart)
 
+	groupStart := time.Now()
 	for _, g := range groupsToScan {
 		roots := findRootPIDs(g, byPID, nameIndex)
 		if len(roots) == 0 {
@@ -229,8 +240,28 @@ func (m *Monitor) scan(source string) {
 			killed++
 		}
 	}
+	groupDur := time.Since(groupStart)
 
 	dur := time.Since(start)
+	if perfActive {
+		m.logs.AddActionf("[perf] source=%s rules=%s process_total=%s process_list=%s process_meta=%s process_index=%s process_relevant=%s process_rss=%s command_eval=%s group_eval=%s total=%s seen=%d relevant=%d groups=%d killed=%d",
+			source,
+			rulesDur.Truncate(time.Millisecond),
+			procDur.Truncate(time.Millisecond),
+			procStats.List.Truncate(time.Millisecond),
+			procStats.Metadata.Truncate(time.Millisecond),
+			procStats.Index.Truncate(time.Millisecond),
+			procStats.Relevant.Truncate(time.Millisecond),
+			procStats.RSS.Truncate(time.Millisecond),
+			commandDur.Truncate(time.Millisecond),
+			groupDur.Truncate(time.Millisecond),
+			dur.Truncate(time.Millisecond),
+			procStats.ProcessesSeen,
+			len(procs),
+			len(groupsToScan),
+			killed,
+		)
+	}
 	summary := fmt.Sprintf("scan ok (%s): procs=%d groups=%d killed=%d duration=%s", source, len(procs), len(groupsToScan), killed, dur.Truncate(time.Millisecond))
 	m.logs.AddRoutine(summary)
 	m.updateStats(start, source, len(procs), killed, summary)
@@ -303,6 +334,30 @@ func (m *Monitor) currentRules() *ruleSnapshot {
 		return snap
 	}
 	return &ruleSnapshot{}
+}
+
+func (m *Monitor) StartPerfCapture(d time.Duration) time.Time {
+	if d <= 0 {
+		d = 10 * time.Second
+	}
+	until := time.Now().Add(d)
+	m.perfMu.Lock()
+	m.perfUntil = until
+	m.perfMu.Unlock()
+	return until
+}
+
+func (m *Monitor) perfCaptureActive(now time.Time) bool {
+	m.perfMu.Lock()
+	defer m.perfMu.Unlock()
+	if m.perfUntil.IsZero() {
+		return false
+	}
+	if now.After(m.perfUntil) {
+		m.perfUntil = time.Time{}
+		return false
+	}
+	return true
 }
 
 func findRootPIDs(group config.GroupSpec, byPID map[int32]Proc, nameIndex procNameIndex) []int32 {

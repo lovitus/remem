@@ -2,6 +2,7 @@ package guard
 
 import (
 	"strings"
+	"time"
 
 	"github.com/shirou/gopsutil/v4/process"
 
@@ -20,17 +21,35 @@ type Proc struct {
 
 type procNameIndex map[string][]int32
 
-func snapshotProcesses(commandWatchlist map[string]struct{}, groups []config.GroupSpec) ([]Proc, map[int32]Proc, map[int32][]int32, procNameIndex, error) {
+type ProcSnapshotStats struct {
+	ProcessesSeen int
+	List          time.Duration
+	Metadata      time.Duration
+	Index         time.Duration
+	Relevant      time.Duration
+	RSS           time.Duration
+	Total         time.Duration
+}
+
+func snapshotProcesses(commandWatchlist map[string]struct{}, groups []config.GroupSpec) ([]Proc, map[int32]Proc, map[int32][]int32, procNameIndex, ProcSnapshotStats, error) {
+	start := time.Now()
+	var stats ProcSnapshotStats
+
+	listStart := time.Now()
 	ps, err := process.Processes()
+	stats.List = time.Since(listStart)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		stats.Total = time.Since(start)
+		return nil, nil, nil, nil, stats, err
 	}
+	stats.ProcessesSeen = len(ps)
 
 	out := make([]Proc, 0, len(ps))
 	byPID := make(map[int32]Proc, len(ps))
 	children := make(map[int32][]int32, len(ps))
 	byPIDHandle := make(map[int32]*process.Process, len(ps))
 
+	metaStart := time.Now()
 	for _, p := range ps {
 		pid := p.Pid
 		name, err := p.Name()
@@ -53,10 +72,14 @@ func snapshotProcesses(commandWatchlist map[string]struct{}, groups []config.Gro
 		byPIDHandle[pid] = p
 		children[ppid] = append(children[ppid], pid)
 	}
+	stats.Metadata = time.Since(metaStart)
 
+	indexStart := time.Now()
 	nameIndex := buildProcNameIndex(byPID)
+	stats.Index = time.Since(indexStart)
 
 	// Decide which processes actually need expensive RSS lookup.
+	relevantStart := time.Now()
 	relevant := make(map[int32]struct{}, len(byPID)/2)
 	for pid, p := range byPID {
 		if _, ok := commandWatchlist[p.NameNorm]; ok {
@@ -69,8 +92,10 @@ func snapshotProcesses(commandWatchlist map[string]struct{}, groups []config.Gro
 			markSubtreeRelevant(root, children, relevant)
 		}
 	}
+	stats.Relevant = time.Since(relevantStart)
 
 	// Fill RSS only for relevant processes.
+	rssStart := time.Now()
 	for pid := range relevant {
 		h := byPIDHandle[pid]
 		if h == nil {
@@ -90,7 +115,9 @@ func snapshotProcesses(commandWatchlist map[string]struct{}, groups []config.Gro
 			out[i] = p
 		}
 	}
-	return out, byPID, children, nameIndex, nil
+	stats.RSS = time.Since(rssStart)
+	stats.Total = time.Since(start)
+	return out, byPID, children, nameIndex, stats, nil
 }
 
 func markSubtreeRelevant(root int32, children map[int32][]int32, relevant map[int32]struct{}) {
