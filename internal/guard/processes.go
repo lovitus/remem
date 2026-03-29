@@ -33,52 +33,23 @@ type ProcSnapshotStats struct {
 
 func snapshotProcesses(commandWatchlist map[string]struct{}, groups []config.GroupSpec) ([]Proc, map[int32]Proc, map[int32][]int32, procNameIndex, ProcSnapshotStats, error) {
 	start := time.Now()
-	var stats ProcSnapshotStats
-
-	listStart := time.Now()
-	ps, err := process.Processes()
-	stats.List = time.Since(listStart)
+	procs, stats, err := listProcessMetadata()
 	if err != nil {
 		stats.Total = time.Since(start)
 		return nil, nil, nil, nil, stats, err
 	}
-	stats.ProcessesSeen = len(ps)
 
-	out := make([]Proc, 0, len(ps))
-	byPID := make(map[int32]Proc, len(ps))
-	children := make(map[int32][]int32, len(ps))
-	byPIDHandle := make(map[int32]*process.Process, len(ps))
-
-	metaStart := time.Now()
-	for _, p := range ps {
-		pid := p.Pid
-		name, err := p.Name()
-		if err != nil || strings.TrimSpace(name) == "" {
-			continue
-		}
-		ppid, err := p.Ppid()
-		if err != nil {
-			continue
-		}
-
-		proc := Proc{
-			PID:      pid,
-			PPID:     ppid,
-			Name:     name,
-			NameNorm: normalizeProcName(name),
-		}
-		out = append(out, proc)
-		byPID[pid] = proc
-		byPIDHandle[pid] = p
-		children[ppid] = append(children[ppid], pid)
+	byPID := make(map[int32]Proc, len(procs))
+	children := make(map[int32][]int32, len(procs))
+	for _, p := range procs {
+		byPID[p.PID] = p
+		children[p.PPID] = append(children[p.PPID], p.PID)
 	}
-	stats.Metadata = time.Since(metaStart)
 
 	indexStart := time.Now()
 	nameIndex := buildProcNameIndex(byPID)
 	stats.Index = time.Since(indexStart)
 
-	// Decide which processes actually need expensive RSS lookup.
 	relevantStart := time.Now()
 	relevant := make(map[int32]struct{}, len(byPID)/2)
 	for pid, p := range byPID {
@@ -94,11 +65,10 @@ func snapshotProcesses(commandWatchlist map[string]struct{}, groups []config.Gro
 	}
 	stats.Relevant = time.Since(relevantStart)
 
-	// Fill RSS only for relevant processes.
 	rssStart := time.Now()
 	for pid := range relevant {
-		h := byPIDHandle[pid]
-		if h == nil {
+		h, err := process.NewProcess(pid)
+		if err != nil || h == nil {
 			continue
 		}
 		mem, err := h.MemoryInfo()
@@ -109,15 +79,14 @@ func snapshotProcesses(commandWatchlist map[string]struct{}, groups []config.Gro
 		p.RSSBytes = mem.RSS
 		byPID[pid] = p
 	}
-
-	for i := range out {
-		if p, ok := byPID[out[i].PID]; ok {
-			out[i] = p
+	for i := range procs {
+		if p, ok := byPID[procs[i].PID]; ok {
+			procs[i] = p
 		}
 	}
 	stats.RSS = time.Since(rssStart)
 	stats.Total = time.Since(start)
-	return out, byPID, children, nameIndex, stats, nil
+	return procs, byPID, children, nameIndex, stats, nil
 }
 
 func markSubtreeRelevant(root int32, children map[int32][]int32, relevant map[int32]struct{}) {
