@@ -460,10 +460,10 @@ const rulesHTML = `<!doctype html>
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    min-height: 40px;
+    gap: 3px;
+    min-height: 30px;
     max-width: 100%;
-    padding: 6px 10px;
+    padding: 3px 8px;
     border-radius: 999px;
     border: 1px solid var(--pill-border);
     background: var(--pill);
@@ -510,23 +510,25 @@ const rulesHTML = `<!doctype html>
     }
   }
   .pill.editing {
-    border-radius: 18px;
-    padding: 12px;
-    min-width: min(100%, 360px);
-    max-width: min(100%, 420px);
-    align-items: stretch;
+    z-index: 8;
+    overflow: visible;
+  }
+  .pill.editing .pill-view,
+  .pill.editing .pill-meta {
+    opacity: .92;
   }
   .pill-view {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     min-width: 0;
     max-width: 100%;
   }
   .pill-name {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     max-width: 220px;
+    line-height: 1.1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -535,13 +537,14 @@ const rulesHTML = `<!doctype html>
   .pill-meta {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: 2px;
     flex-wrap: wrap;
   }
   .tag {
     border-radius: 999px;
-    padding: 1px 7px;
-    font-size: 10px;
+    padding: 0 6px;
+    font-size: 9px;
+    line-height: 16px;
     border: 1px solid var(--line);
     background: #f4f8fc;
     color: var(--muted);
@@ -564,22 +567,43 @@ const rulesHTML = `<!doctype html>
   body[data-theme="dark"] .tag.error { border-color: #91454c; color: #ffb1b8; background: rgba(10,18,27,.72); }
   .pill-edit {
     display: grid;
-    gap: 8px;
+    gap: 6px;
     width: 100%;
+  }
+  .pill-popover {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 8px);
+    z-index: 20;
+    width: min(320px, calc(100vw - 48px));
+    padding: 8px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    box-shadow: 0 14px 28px rgba(21, 42, 62, .18);
+  }
+  .pill-popover.align-right {
+    left: auto;
+    right: 0;
+  }
+  body[data-theme="dark"] .pill-popover {
+    border-color: #35506f;
+    background: linear-gradient(180deg, rgba(18,32,47,.98), rgba(14,24,35,.98));
+    box-shadow: 0 16px 30px rgba(0,0,0,.32);
   }
   .edit-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 138px;
-    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) 96px;
+    gap: 6px;
   }
   .input {
     width: 100%;
-    border-radius: 12px;
+    border-radius: 10px;
     border: 1px solid var(--line);
     background: #fff;
     color: var(--text);
-    padding: 11px 13px;
-    font-size: 16px;
+    padding: 7px 9px;
+    font-size: 13px;
     outline: none;
   }
   body[data-theme="dark"] .input { background: rgba(11, 18, 28, .86); }
@@ -602,12 +626,12 @@ const rulesHTML = `<!doctype html>
   .edit-actions {
     display: flex;
     justify-content: space-between;
-    gap: 8px;
-    align-items: center;
+    gap: 6px;
+    align-items: flex-start;
   }
   .edit-tools {
     display: flex;
-    gap: 6px;
+    gap: 4px;
     flex-wrap: wrap;
   }
   .tiny-btn {
@@ -615,8 +639,9 @@ const rulesHTML = `<!doctype html>
     background: #fff;
     color: var(--text);
     border-radius: 999px;
-    padding: 8px 12px;
-    font-size: 13px;
+    padding: 5px 8px;
+    font-size: 11px;
+    line-height: 1.2;
     cursor: pointer;
   }
   body[data-theme="dark"] .tiny-btn {
@@ -713,9 +738,10 @@ const rulesHTML = `<!doctype html>
   }
   @media (max-width: 640px) {
     .edit-grid { grid-template-columns: 1fr; }
-    .pill.editing {
-      min-width: 100%;
-      max-width: 100%;
+    .pill-popover {
+      left: 0;
+      right: 0;
+      width: auto;
     }
   }
 </style>
@@ -1202,24 +1228,73 @@ function renderCanvas(kind) {
     pill.className = pillClasses(kind, item, issueMap);
     pill.dataset.kind = kind;
     pill.dataset.id = item.id;
+    pill.addEventListener('dblclick', () => enterEdit(kind, item.id));
+    const view = document.createElement('div');
+    view.className = 'pill-view';
+
+    const name = document.createElement('span');
+    name.className = 'pill-name';
+    name.textContent = item.removed ? item.baselineName : normalizeName(item.name || item.baselineName);
+    view.appendChild(name);
+
+    const meta = document.createElement('div');
+    meta.className = 'pill-meta';
+    const sourceTag = document.createElement('span');
+    sourceTag.className = 'tag ' + (item.sourceDefault ? 'default' : 'added');
+    sourceTag.textContent = item.sourceDefault ? '默认' : '新增';
+    meta.appendChild(sourceTag);
+
+    if (parsePositive(item.limitValue) > 0 && !item.removed) {
+      const limitTag = document.createElement('span');
+      limitTag.className = 'tag limit';
+      limitTag.textContent = fmtGiB(item.limitValue) + 'GiB';
+      meta.appendChild(limitTag);
+    }
+
+    if (item.removed) {
+      const removedTag = document.createElement('span');
+      removedTag.className = 'tag removed';
+      removedTag.textContent = '删除候选';
+      meta.appendChild(removedTag);
+    } else if (duplicate) {
+      const dupTag = document.createElement('span');
+      dupTag.className = 'tag error';
+      dupTag.textContent = '重复';
+      meta.appendChild(dupTag);
+    } else if (invalid) {
+      const badTag = document.createElement('span');
+      badTag.className = 'tag error';
+      badTag.textContent = '上限无效';
+      meta.appendChild(badTag);
+    } else if (!parsePositive(item.limitValue)) {
+      const globalTag = document.createElement('span');
+      globalTag.className = 'tag';
+      globalTag.textContent = '跟随全局';
+      meta.appendChild(globalTag);
+    }
+
+    pill.appendChild(view);
+    pill.appendChild(meta);
 
     if (editing) {
+      const popover = document.createElement('div');
+      popover.className = 'pill-popover';
       const edit = document.createElement('div');
       edit.className = 'pill-edit';
       const grid = document.createElement('div');
       grid.className = 'edit-grid';
 
-      const name = document.createElement('input');
-      name.className = 'input' + (duplicate ? ' duplicate' : '');
-      name.type = 'text';
-      name.value = item.name;
-      name.placeholder = kind === 'commands' ? '输入命令名' : '输入程序组名';
-      name.dataset.editName = item.id;
-      name.addEventListener('input', () => {
-        item.name = name.value;
+      const nameInput = document.createElement('input');
+      nameInput.className = 'input' + (duplicate ? ' duplicate' : '');
+      nameInput.type = 'text';
+      nameInput.value = item.name;
+      nameInput.placeholder = kind === 'commands' ? '输入命令名' : '输入程序组名';
+      nameInput.dataset.editName = item.id;
+      nameInput.addEventListener('input', () => {
+        item.name = nameInput.value;
         updateDirtyStatus();
       });
-      name.addEventListener('keydown', (e) => {
+      nameInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
           commitEdit();
@@ -1230,18 +1305,18 @@ function renderCanvas(kind) {
         }
       });
 
-      const limit = document.createElement('input');
-      limit.className = 'input num' + (invalid ? ' invalid' : '');
-      limit.type = 'number';
-      limit.min = '0.1';
-      limit.step = '0.1';
-      limit.placeholder = fmtGiB(kind === 'commands' ? state.globalLimits.command : state.globalLimits.group);
-      limit.value = item.limitValue || '';
-      limit.addEventListener('input', () => {
-        item.limitValue = limit.value;
+      const limitInput = document.createElement('input');
+      limitInput.className = 'input num' + (invalid ? ' invalid' : '');
+      limitInput.type = 'number';
+      limitInput.min = '0.1';
+      limitInput.step = '0.1';
+      limitInput.placeholder = fmtGiB(kind === 'commands' ? state.globalLimits.command : state.globalLimits.group);
+      limitInput.value = item.limitValue || '';
+      limitInput.addEventListener('input', () => {
+        item.limitValue = limitInput.value;
         updateDirtyStatus();
       });
-      limit.addEventListener('keydown', (e) => {
+      limitInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
           commitEdit();
@@ -1252,18 +1327,18 @@ function renderCanvas(kind) {
         }
       });
 
-      grid.appendChild(name);
-      grid.appendChild(limit);
+      grid.appendChild(nameInput);
+      grid.appendChild(limitInput);
 
       const actions = document.createElement('div');
       actions.className = 'edit-actions';
       const tags = document.createElement('div');
       tags.className = 'pill-meta';
       if (item.sourceDefault) {
-        const sourceTag = document.createElement('span');
-        sourceTag.className = 'tag default';
-        sourceTag.textContent = '默认';
-        tags.appendChild(sourceTag);
+        const sourceEditTag = document.createElement('span');
+        sourceEditTag.className = 'tag default';
+        sourceEditTag.textContent = '默认';
+        tags.appendChild(sourceEditTag);
       }
 
       const tools = document.createElement('div');
@@ -1276,7 +1351,7 @@ function renderCanvas(kind) {
       reset.addEventListener('click', (e) => {
         e.stopPropagation();
         item.limitValue = '';
-        limit.value = '';
+        limitInput.value = '';
         updateDirtyStatus();
       });
 
@@ -1305,55 +1380,15 @@ function renderCanvas(kind) {
       actions.appendChild(tools);
       edit.appendChild(grid);
       edit.appendChild(actions);
-      pill.appendChild(edit);
-    } else {
-      pill.addEventListener('dblclick', () => enterEdit(kind, item.id));
-      const view = document.createElement('div');
-      view.className = 'pill-view';
+      popover.appendChild(edit);
+      pill.appendChild(popover);
 
-      const name = document.createElement('span');
-      name.className = 'pill-name';
-      name.textContent = item.removed ? item.baselineName : normalizeName(item.name || item.baselineName);
-      view.appendChild(name);
-
-      const meta = document.createElement('div');
-      meta.className = 'pill-meta';
-      const sourceTag = document.createElement('span');
-      sourceTag.className = 'tag ' + (item.sourceDefault ? 'default' : 'added');
-      sourceTag.textContent = item.sourceDefault ? '默认' : '新增';
-      meta.appendChild(sourceTag);
-
-      if (parsePositive(item.limitValue) > 0 && !item.removed) {
-        const limitTag = document.createElement('span');
-        limitTag.className = 'tag limit';
-        limitTag.textContent = fmtGiB(item.limitValue) + 'GiB';
-        meta.appendChild(limitTag);
-      }
-
-      if (item.removed) {
-        const removedTag = document.createElement('span');
-        removedTag.className = 'tag removed';
-        removedTag.textContent = '删除候选';
-        meta.appendChild(removedTag);
-      } else if (duplicate) {
-        const dupTag = document.createElement('span');
-        dupTag.className = 'tag error';
-        dupTag.textContent = '重复';
-        meta.appendChild(dupTag);
-      } else if (invalid) {
-        const badTag = document.createElement('span');
-        badTag.className = 'tag error';
-        badTag.textContent = '上限无效';
-        meta.appendChild(badTag);
-      } else if (!parsePositive(item.limitValue)) {
-        const globalTag = document.createElement('span');
-        globalTag.className = 'tag';
-        globalTag.textContent = '跟随全局';
-        meta.appendChild(globalTag);
-      }
-
-      pill.appendChild(view);
-      pill.appendChild(meta);
+      requestAnimationFrame(() => {
+        const rect = pill.getBoundingClientRect();
+        if (window.innerWidth - rect.left < 340) {
+          popover.classList.add('align-right');
+        }
+      });
     }
 
     canvas.appendChild(pill);
