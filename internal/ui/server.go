@@ -171,36 +171,37 @@ const rulesHTML = `<!doctype html>
 <title>remem rules editor</title>
 <style>
   :root {
-    --bg: #0b1017;
-    --bg2: #101827;
-    --panel: #141d29;
-    --panel-soft: #182335;
-    --panel-deep: #0f1723;
-    --line: #2c3d53;
-    --line-soft: #243245;
-    --text: #eaf1fb;
-    --muted: #9cb1cb;
-    --muted-soft: #7e93ad;
-    --ok: #3ccc77;
-    --warn: #ffcd62;
-    --danger: #d75b63;
-    --info: #71c1ff;
-    --save: #24875f;
-    --secondary: #42556d;
-    --focus: #63a6ff;
-    --shadow: 0 14px 36px rgba(0,0,0,.28);
+    --bg: #09111a;
+    --bg2: #101b2b;
+    --panel: rgba(18, 27, 40, .96);
+    --panel-soft: rgba(22, 34, 50, .96);
+    --line: #2b4057;
+    --line-soft: #213243;
+    --text: #edf4ff;
+    --muted: #9eb2c9;
+    --muted-soft: #7d91a8;
+    --ok: #44ce80;
+    --warn: #efbe58;
+    --danger: #de6b73;
+    --info: #80ceff;
+    --save: #24865f;
+    --secondary: #41556e;
+    --focus: #5ea8ff;
+    --pill: #12202f;
+    --pill-border: #2a4258;
+    --shadow: 0 18px 34px rgba(0, 0, 0, .28);
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     color: var(--text);
     background:
-      radial-gradient(circle at top right, rgba(40,74,124,.42), transparent 30%),
-      radial-gradient(circle at top left, rgba(27,72,55,.25), transparent 26%),
+      radial-gradient(circle at top right, rgba(44, 87, 141, .40), transparent 30%),
+      radial-gradient(circle at top left, rgba(28, 81, 56, .22), transparent 26%),
       linear-gradient(180deg, var(--bg2), var(--bg));
     font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   }
-  a { color: #9cd9ff; text-decoration: none; }
+  a { color: #a8ddff; text-decoration: none; }
   a:hover { text-decoration: underline; }
   .page {
     max-width: 1240px;
@@ -213,10 +214,10 @@ const rulesHTML = `<!doctype html>
     z-index: 50;
     margin: -18px -16px 18px;
     padding: 18px 16px 14px;
-    background: linear-gradient(180deg, rgba(11,16,23,.96), rgba(11,16,23,.90));
+    background: linear-gradient(180deg, rgba(9,17,26,.97), rgba(9,17,26,.91));
     backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(60, 82, 110, .55);
-    box-shadow: 0 10px 24px rgba(0,0,0,.12);
+    border-bottom: 1px solid rgba(56, 79, 105, .58);
+    box-shadow: 0 12px 28px rgba(0,0,0,.15);
   }
   .hero-inner {
     max-width: 1240px;
@@ -229,9 +230,6 @@ const rulesHTML = `<!doctype html>
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 14px;
     align-items: start;
-  }
-  .hero-title {
-    min-width: 0;
   }
   h1 {
     margin: 0;
@@ -261,18 +259,18 @@ const rulesHTML = `<!doctype html>
     min-height: 40px;
     box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
   }
-  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
   .btn.save { background: var(--save); }
   .btn.secondary { background: var(--secondary); }
-  .btn.linkish { background: #203044; border-color: #35506f; }
-  .btn.danger { background: #60252b; border-color: #8f3942; }
+  .btn.linkish { background: #213247; border-color: #35506f; }
+  .btn.danger { background: #5d272d; border-color: #8b3c45; }
   .banner {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 12px;
     align-items: center;
     border: 1px solid var(--line);
-    background: linear-gradient(180deg, rgba(20,29,41,.98), rgba(17,24,35,.95));
+    background: linear-gradient(180deg, rgba(19,29,42,.98), rgba(15,22,34,.96));
     border-radius: 12px;
     padding: 11px 14px;
     box-shadow: var(--shadow);
@@ -284,14 +282,13 @@ const rulesHTML = `<!doctype html>
   }
   .banner.saved strong { color: var(--ok); }
   .banner.dirty strong { color: var(--warn); }
-  .banner.error strong { color: #ff9aa3; }
+  .banner.error strong { color: #ffadb4; }
   .banner.info strong { color: var(--info); }
   .banner a {
     white-space: nowrap;
-    color: #b7e2ff;
+    color: #b8e5ff;
     font-size: 13px;
   }
-
   .intro {
     margin-bottom: 14px;
     border: 1px solid #31506f;
@@ -302,43 +299,21 @@ const rulesHTML = `<!doctype html>
     line-height: 1.6;
   }
   .intro b { color: #eff6ff; }
-
-  .section {
-    margin-top: 14px;
-    display: grid;
-    gap: 12px;
-  }
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
+  .section { display: grid; gap: 14px; }
   .card {
-    background: linear-gradient(180deg, rgba(20,29,41,.98), rgba(16,23,35,.96));
+    background: linear-gradient(180deg, var(--panel), rgba(13,20,31,.98));
     border: 1px solid var(--line-soft);
-    border-radius: 14px;
+    border-radius: 16px;
     padding: 14px;
     box-shadow: var(--shadow);
   }
-  .card.primary {
-    border-color: #35506f;
-    background: linear-gradient(180deg, rgba(20,31,48,.98), rgba(16,24,36,.98));
-  }
-  .card.secondary {
-    border-color: #26374a;
-    background: linear-gradient(180deg, rgba(18,26,38,.98), rgba(14,21,31,.98));
-  }
-  .card h2, .card h3 {
-    margin: 0;
-    font-size: 15px;
-    letter-spacing: .2px;
-    color: #eef5ff;
-  }
+  .card.primary { border-color: #365271; }
+  .card h2 { margin: 0; font-size: 16px; color: #edf5ff; }
   .card-head {
     display: flex;
     justify-content: space-between;
-    gap: 10px;
-    align-items: baseline;
+    gap: 12px;
+    align-items: center;
     margin-bottom: 8px;
   }
   .desc {
@@ -347,42 +322,18 @@ const rulesHTML = `<!doctype html>
     font-size: 12px;
     line-height: 1.5;
   }
-  .pill {
+  .pill-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     border-radius: 999px;
-    padding: 4px 9px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: #b7d8f7;
     background: #17283b;
     border: 1px solid #2d4461;
-    color: #b7d8f7;
-    font-size: 11px;
     white-space: nowrap;
   }
-  .summary-list {
-    margin-top: 10px;
-    display: grid;
-    gap: 8px;
-  }
-  .summary-item {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 12px;
-    align-items: center;
-    padding: 8px 10px;
-    background: var(--panel-deep);
-    border: 1px solid var(--line-soft);
-    border-radius: 10px;
-    font-family: ui-monospace, Menlo, Consolas, monospace;
-    font-size: 12px;
-  }
-  .summary-empty {
-    color: var(--muted-soft);
-    padding: 16px 10px;
-    text-align: center;
-    border: 1px dashed #30445e;
-    border-radius: 10px;
-    background: rgba(15,23,35,.45);
-    font-size: 12px;
-  }
-
   .limits-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -391,7 +342,7 @@ const rulesHTML = `<!doctype html>
   }
   .limit-card {
     padding: 10px 12px;
-    background: var(--panel-deep);
+    background: rgba(13, 19, 29, .74);
     border: 1px solid var(--line-soft);
     border-radius: 12px;
   }
@@ -407,60 +358,164 @@ const rulesHTML = `<!doctype html>
     font-size: 12px;
     line-height: 1.5;
   }
-
-  .editor-table {
-    margin-top: 10px;
-    border: 1px solid var(--line-soft);
-    border-radius: 12px;
-    overflow: hidden;
-    background: rgba(13,19,29,.75);
-  }
-  .editor-head, .editor-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 132px 44px 28px;
+  .legend {
+    display: flex;
     gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .legend .mini {
+    display: inline-flex;
     align-items: center;
-    padding: 8px 10px;
-  }
-  .editor-head {
-    background: rgba(23,35,52,.96);
-    border-bottom: 1px solid var(--line-soft);
-    color: #b9cce3;
+    gap: 6px;
+    padding: 5px 9px;
+    border-radius: 999px;
     font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .08em;
+    border: 1px solid var(--pill-border);
+    background: rgba(14,22,32,.72);
+    color: var(--muted);
   }
-  .editor-body {
+  .legend .default { border-color: #36506f; color: #cfe3f8; }
+  .legend .added { border-color: #2f6749; color: #abf1c5; }
+  .legend .custom { border-color: #5d5d2d; color: #ffe8a4; }
+  .legend .removed { border-color: #724249; color: #ffbec4; }
+  .legend .error { border-color: #91454c; color: #ffb1b7; }
+  .canvas {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 42px;
+    max-width: 100%;
+    padding: 8px 10px 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--pill-border);
+    background: linear-gradient(180deg, rgba(18,32,47,.95), rgba(14,24,35,.94));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+    transition: border-color .16s ease, transform .16s ease, opacity .16s ease;
+  }
+  .pill:hover { border-color: #43607f; }
+  .pill.default-item { border-color: #35506f; }
+  .pill.added-item { border-color: #2f6749; background: linear-gradient(180deg, rgba(19,43,35,.92), rgba(14,27,24,.94)); }
+  .pill.custom-item { box-shadow: inset 0 0 0 1px rgba(239,190,88,.16); }
+  .pill.removed-item {
+    opacity: .72;
+    border-color: #7a434a;
+    background: linear-gradient(180deg, rgba(52,26,30,.78), rgba(31,16,20,.88));
+  }
+  .pill.duplicate-item {
+    border-color: #c89b3b;
+    background: linear-gradient(180deg, rgba(72,53,24,.92), rgba(42,29,13,.90));
+  }
+  .pill.invalid-item {
+    border-color: #c5575d;
+    background: linear-gradient(180deg, rgba(73,30,36,.92), rgba(39,18,22,.90));
+  }
+  .pill.editing {
+    border-radius: 22px;
+    padding: 10px;
+    min-width: min(100%, 360px);
+    max-width: min(100%, 420px);
+    align-items: stretch;
+  }
+  .pill-view {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .pill-name {
+    font-size: 13px;
+    font-weight: 600;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pill.removed-item .pill-name { text-decoration: line-through; }
+  .pill-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .tag {
+    border-radius: 999px;
+    padding: 3px 8px;
+    font-size: 11px;
+    border: 1px solid #31485f;
+    background: rgba(10,18,27,.72);
+    color: #cae1f7;
+    white-space: nowrap;
+  }
+  .tag.limit { border-color: #6a5e2b; color: #ffe39a; }
+  .tag.default { border-color: #35506f; color: #cde2f8; }
+  .tag.added { border-color: #2f6749; color: #abf1c5; }
+  .tag.removed { border-color: #8b4850; color: #ffb1b8; }
+  .tag.error { border-color: #91454c; color: #ffb1b8; }
+  .pill-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .icon-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1px solid #4a6078;
+    background: rgba(18,31,46,.88);
+    color: #ddecff;
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+  }
+  .icon-btn:hover { border-color: #6b88a9; }
+  .icon-btn.remove {
+    border-color: #704048;
+    background: rgba(46,27,31,.88);
+    color: #ffc0c6;
+  }
+  .icon-btn.undo {
+    border-color: #3a6a50;
+    background: rgba(18,46,33,.86);
+    color: #aff3c8;
+  }
+  .icon-btn.add {
+    border-color: #2f6749;
+    background: rgba(18,46,33,.88);
+    color: #9bf0c1;
+  }
+  .pill-edit {
     display: grid;
-    gap: 0;
+    gap: 8px;
+    width: 100%;
   }
-  .editor-row {
-    border-top: 1px solid rgba(38,55,74,.75);
-  }
-  .editor-row:first-child { border-top: 0; }
-  .editor-row.add {
-    background: rgba(18,31,28,.34);
-  }
-  .editor-row.invalid {
-    background: rgba(90,31,38,.24);
-  }
-  .editor-row.duplicate {
-    background: rgba(97,68,26,.22);
+  .edit-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 120px;
+    gap: 8px;
   }
   .input {
     width: 100%;
-    border-radius: 10px;
+    border-radius: 12px;
     border: 1px solid var(--line);
-    background: var(--panel-deep);
+    background: rgba(11, 18, 28, .86);
     color: var(--text);
-    padding: 9px 10px;
+    padding: 9px 11px;
     font-size: 13px;
     outline: none;
   }
   .input:focus {
     border-color: var(--focus);
-    box-shadow: 0 0 0 2px rgba(99, 166, 255, .18);
+    box-shadow: 0 0 0 2px rgba(94,168,255,.18);
   }
   .input.invalid {
     border-color: #c5575d;
@@ -474,72 +529,49 @@ const rulesHTML = `<!doctype html>
     text-align: right;
     font-family: ui-monospace, Menlo, Consolas, monospace;
   }
-  .row-state {
-    text-align: center;
-    font-weight: 700;
-    font-size: 16px;
+  .edit-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: center;
   }
-  .row-state.ok { color: var(--ok); }
-  .row-state.warn { color: var(--warn); }
-  .row-state.bad { color: #ff9aa3; }
-  .icon-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: 9px;
-    border: 1px solid #4f637c;
-    background: #182536;
-    color: #dcecff;
+  .edit-tools {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .tiny-btn {
+    border: 1px solid #49617c;
+    background: rgba(18,31,46,.92);
+    color: #dbeaff;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 11px;
     cursor: pointer;
-    font-size: 18px;
-    line-height: 1;
   }
-  .icon-btn.add {
-    border-color: #29664a;
-    background: #153225;
-    color: #9bf0c1;
+  .tiny-btn.warn { border-color: #77533b; color: #ffd7a3; }
+  .tiny-btn.danger { border-color: #7f4249; color: #ffc0c6; }
+  .pill-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px dashed #3d5f80;
+    background: rgba(18,32,47,.48);
+    color: #b6d3ef;
+    cursor: pointer;
   }
-  .icon-btn.remove {
-    border-color: #6e3941;
-    background: #321d22;
-    color: #ffb4bc;
-  }
-  .icon-btn:disabled {
-    opacity: .35;
-    cursor: not-allowed;
-  }
+  .pill-add:hover { border-color: #5d88b5; }
   .validation {
     margin-top: 10px;
     min-height: 18px;
     color: var(--muted);
     font-size: 12px;
   }
-  .validation.error { color: #ff9aa3; }
+  .validation.error { color: #ffb1b8; }
   .validation.warn { color: var(--warn); }
-
-  .default-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 12px;
-    margin-top: 10px;
-  }
-  .default-col {
-    min-width: 0;
-  }
-  .default-list {
-    margin-top: 8px;
-    display: grid;
-    gap: 6px;
-  }
-  .default-item {
-    padding: 7px 9px;
-    border-radius: 10px;
-    border: 1px solid #243448;
-    background: rgba(15,23,35,.72);
-    font-family: ui-monospace, Menlo, Consolas, monospace;
-    font-size: 12px;
-    color: #c7d6e8;
-  }
-
   @media (max-width: 980px) {
     .hero {
       position: static;
@@ -550,27 +582,16 @@ const rulesHTML = `<!doctype html>
       border-bottom: 0;
       box-shadow: none;
     }
-    .hero-top {
-      grid-template-columns: 1fr;
-    }
-    .hero-actions {
-      justify-content: flex-start;
-    }
-    .banner {
-      grid-template-columns: 1fr;
-    }
-    .grid-2, .limits-grid, .default-grid {
-      grid-template-columns: 1fr;
-    }
+    .hero-top { grid-template-columns: 1fr; }
+    .hero-actions { justify-content: flex-start; }
+    .banner { grid-template-columns: 1fr; }
+    .limits-grid { grid-template-columns: 1fr; }
   }
-
-  @media (max-width: 760px) {
-    .editor-head, .editor-row {
-      grid-template-columns: minmax(0, 1fr) 110px 36px;
-    }
-    .editor-head .state-col,
-    .editor-row .row-state {
-      display: none;
+  @media (max-width: 640px) {
+    .edit-grid { grid-template-columns: 1fr; }
+    .pill.editing {
+      min-width: 100%;
+      max-width: 100%;
     }
   }
 </style>
@@ -580,7 +601,7 @@ const rulesHTML = `<!doctype html>
   <div class="hero">
     <div class="hero-inner">
       <div class="hero-top">
-        <div class="hero-title">
+        <div>
           <h1>Rules Editor</h1>
           <div class="sub" id="meta"></div>
         </div>
@@ -602,31 +623,14 @@ const rulesHTML = `<!doctype html>
   </div>
 
   <div class="intro">
-    支持 <b>全局上限</b> 和 <b>单项自定义上限</b>。当前生效内容在上方对照，编辑区在中间直接修改，保存后立刻热加载生效。
+    现在所有规则都在一套画布里 <b>原地编辑</b>。双击任意胶囊即可修改名称或单项上限；保存后立刻热加载生效。
   </div>
 
   <div class="section">
-    <div class="grid-2">
-      <div class="card secondary">
-        <div class="card-head">
-          <h2>当前生效命令规则</h2>
-          <span class="pill" id="effectiveCommandCount">0 项</span>
-        </div>
-        <div class="summary-list" id="effectiveCommands"></div>
-      </div>
-      <div class="card secondary">
-        <div class="card-head">
-          <h2>当前生效程序组规则</h2>
-          <span class="pill" id="effectiveGroupCount">0 项</span>
-        </div>
-        <div class="summary-list" id="effectiveGroups"></div>
-      </div>
-    </div>
-
-    <div class="card secondary">
+    <div class="card">
       <div class="card-head">
         <h2>全局上限</h2>
-        <span class="pill">保存后立即写入当前生效配置</span>
+        <span class="pill-badge">保存后立即写入当前生效配置</span>
       </div>
       <div class="limits-grid">
         <div class="limit-card">
@@ -639,67 +643,37 @@ const rulesHTML = `<!doctype html>
         </div>
       </div>
       <div class="hint" id="baseLimitsHint"></div>
-    </div>
-
-    <div class="grid-2">
-      <div class="card primary">
-        <div class="card-head">
-          <div>
-            <h2>命令规则编辑</h2>
-            <p class="desc">每行一条规则。名称为空不保存；单项上限留空时使用全局上限。</p>
-          </div>
-          <span class="pill" id="draftCommandCount">0 行</span>
-        </div>
-        <div class="editor-table">
-          <div class="editor-head">
-            <div>名称</div>
-            <div>单项上限</div>
-            <div class="state-col">状态</div>
-            <div></div>
-          </div>
-          <div class="editor-body" id="cmdBox"></div>
-        </div>
-        <div class="validation" id="cmdValidation"></div>
-      </div>
-      <div class="card primary">
-        <div class="card-head">
-          <div>
-            <h2>程序组规则编辑</h2>
-            <p class="desc">适合浏览器、IDE、工具进程组。输入内容后即视为有效候选。</p>
-          </div>
-          <span class="pill" id="draftGroupCount">0 行</span>
-        </div>
-        <div class="editor-table">
-          <div class="editor-head">
-            <div>名称</div>
-            <div>单项上限</div>
-            <div class="state-col">状态</div>
-            <div></div>
-          </div>
-          <div class="editor-body" id="grpBox"></div>
-        </div>
-        <div class="validation" id="grpValidation"></div>
+      <div class="legend">
+        <span class="mini default">默认规则</span>
+        <span class="mini added">新增规则</span>
+        <span class="mini custom">单项上限</span>
+        <span class="mini removed">删除候选</span>
+        <span class="mini error">校验错误</span>
       </div>
     </div>
 
-    <div class="card secondary">
+    <div class="card primary">
       <div class="card-head">
         <div>
-          <h2>默认规则</h2>
-          <p class="desc">默认规则始终可见，方便对照当前生效内容，但不占用主编辑区。</p>
+          <h2>命令规则</h2>
+          <p class="desc">默认规则和当前生效规则合并显示。双击胶囊即可原地修改。</p>
         </div>
-        <span class="pill">只读参考</span>
+        <span class="pill-badge" id="commandCount">0 项</span>
       </div>
-      <div class="default-grid">
-        <div class="default-col">
-          <h3>默认命令规则</h3>
-          <div class="default-list" id="defaultCommands"></div>
+      <div class="canvas" id="cmdCanvas"></div>
+      <div class="validation" id="cmdValidation"></div>
+    </div>
+
+    <div class="card primary">
+      <div class="card-head">
+        <div>
+          <h2>程序组规则</h2>
+          <p class="desc">浏览器、IDE 和工具进程组统一在这里查看和编辑。</p>
         </div>
-        <div class="default-col">
-          <h3>默认程序组规则</h3>
-          <div class="default-list" id="defaultGroups"></div>
-        </div>
+        <span class="pill-badge" id="groupCount">0 项</span>
       </div>
+      <div class="canvas" id="grpCanvas"></div>
+      <div class="validation" id="grpValidation"></div>
     </div>
   </div>
 </div>
@@ -707,6 +681,7 @@ const rulesHTML = `<!doctype html>
 <script>
 const EPS = 0.0001;
 const state = {
+  nextId: 1,
   baseLimits: { command: 2, group: 6 },
   activeLimits: { command: 2, group: 6 },
   globalLimits: { command: 2, group: 6 },
@@ -714,9 +689,7 @@ const state = {
   effective: { commands: [], groups: [] },
   effectiveLimits: { commands: {}, groups: {} },
   draft: { commands: [], groups: [] },
-  status: { kind: 'info', title: '加载中', note: '正在读取当前规则状态。' },
-  dirty: false,
-  restoring: false,
+  editing: null,
 };
 
 function normalizeName(v) {
@@ -738,298 +711,47 @@ function fmtGiB(v) {
   return (Math.round(n * 100) / 100).toFixed(2);
 }
 
-function normalizeNameList(arr) {
-  const out = [];
-  const seen = new Set();
-  for (const item of arr || []) {
-    const v = normalizeName(item);
-    if (!v || seen.has(v)) continue;
-    seen.add(v);
-    out.push(v);
-  }
-  return out;
-}
-
-function normalizeItems(items, globalLimit) {
-  const out = [];
-  const seen = new Set();
-  for (const raw of items || []) {
-    const name = normalizeName((raw || {}).name || '');
-    if (!name || seen.has(name)) continue;
-    seen.add(name);
-    const custom = !!(raw && raw.custom);
-    const parsed = parsePositive((raw || {}).limit);
-    const limit = custom ? (parsed || globalLimit) : globalLimit;
-    out.push({ name, limit: roundGiB(limit), custom });
-  }
-  return out;
-}
-
-function itemsFromNames(names, overrideMap, globalLimit) {
-  return normalizeNameList(names || []).map((name) => {
-    const ov = parsePositive((overrideMap || {})[name]);
-    return { name, limit: ov > 0 ? ov : globalLimit, custom: ov > 0 };
-  });
-}
-
-function summarizeLines(containerId, countId, items, limitMap, fallbackLimit) {
-  const host = document.getElementById(containerId);
-  document.getElementById(countId).textContent = (items.length || 0) + ' 项';
-  host.innerHTML = '';
-  if (!items.length) {
-    const empty = document.createElement('div');
-    empty.className = 'summary-empty';
-    empty.textContent = '当前没有规则。';
-    host.appendChild(empty);
-    return;
-  }
-  for (const name of items) {
-    const row = document.createElement('div');
-    row.className = 'summary-item';
-    row.innerHTML = '<div>' + name + '</div><div>' + fmtGiB((limitMap || {})[name] || fallbackLimit) + 'GiB</div>';
-    host.appendChild(row);
-  }
-}
-
-function renderDefaults(containerId, items) {
-  const host = document.getElementById(containerId);
-  host.innerHTML = '';
-  if (!items.length) {
-    const empty = document.createElement('div');
-    empty.className = 'summary-empty';
-    empty.textContent = '无默认项';
-    host.appendChild(empty);
-    return;
-  }
-  for (const name of items) {
-    const row = document.createElement('div');
-    row.className = 'default-item';
-    row.textContent = name;
-    host.appendChild(row);
-  }
-}
-
-function getValidation(kind) {
-  const items = state.draft[kind] || [];
-  const issues = [];
-  const seen = new Map();
-  items.forEach((raw, idx) => {
-    const name = normalizeName(raw.name);
-    const limitRaw = (raw.limitValue || '').trim();
-    if (!name) return;
-    if (!seen.has(name)) {
-      seen.set(name, []);
-    }
-    seen.get(name).push(idx);
-    if (limitRaw !== '' && parsePositive(limitRaw) <= 0) {
-      issues.push({ idx, type: 'invalid-limit', message: name + ' 的单项上限必须大于 0' });
-    }
-  });
-  for (const [name, indexes] of seen.entries()) {
-    if (indexes.length > 1) {
-      indexes.forEach((idx) => issues.push({ idx, type: 'duplicate', message: '重复规则: ' + name }));
-    }
-  }
-  return issues;
-}
-
-function hasValidationErrors() {
-  return getValidation('commands').length > 0 || getValidation('groups').length > 0;
+function nextPillId(kind) {
+  const id = kind + '-' + state.nextId;
+  state.nextId += 1;
+  return id;
 }
 
 function updateStatus(kind, title, note) {
-  state.status = { kind, title, note };
   const banner = document.getElementById('statusBanner');
   banner.className = 'banner ' + kind;
   document.getElementById('statusTitle').textContent = title;
   document.getElementById('statusNote').textContent = note;
 }
 
-function updateDirtyState() {
-  if (hasValidationErrors()) {
-    updateStatus('error', '存在未提交更改', '请先修正重复名称或非法上限，然后再保存。');
-    state.dirty = true;
-    return;
-  }
-  const patch = computePatchFromDraft();
-  const same = JSON.stringify(patch) === JSON.stringify(computePatchFromEffective());
-  state.dirty = !same;
-  if (state.dirty) {
-    updateStatus('dirty', '存在未提交更改', '修改已留在页面内，点击“保存并立即生效”后才会写入当前规则。');
-  } else {
-    updateStatus('saved', '所有更改已保存', '当前页面内容与已生效规则一致。');
-  }
+function activeItems(kind) {
+  return (state.draft[kind] || []).filter((item) => !item.removed);
 }
 
-function makeDraftRow(raw) {
-  return {
-    name: normalizeName(raw.name || ''),
-    custom: !!raw.custom,
-    limitValue: raw.custom ? fmtGiB(raw.limit || 0) : '',
-  };
-}
-
-function renderEditor(kind) {
-  const box = document.getElementById(kind === 'commands' ? 'cmdBox' : 'grpBox');
-  const validationEl = document.getElementById(kind === 'commands' ? 'cmdValidation' : 'grpValidation');
-  const countEl = document.getElementById(kind === 'commands' ? 'draftCommandCount' : 'draftGroupCount');
-  const items = state.draft[kind];
-  const globalLimit = kind === 'commands' ? state.globalLimits.command : state.globalLimits.group;
-  const placeholder = kind === 'commands' ? '输入命令名' : '输入程序组名';
-  const issues = getValidation(kind);
-  const issueMap = new Map();
-  issues.forEach((it) => {
-    if (!issueMap.has(it.idx)) issueMap.set(it.idx, []);
-    issueMap.get(it.idx).push(it);
+function buildMergedDraft(kind, defaults, effective, limitMap, globalLimit) {
+  const defaultSet = new Set(defaults);
+  const effectiveSet = new Set(effective);
+  const mergedNames = [];
+  defaults.forEach((name) => mergedNames.push(name));
+  effective.forEach((name) => {
+    if (!defaultSet.has(name)) mergedNames.push(name);
   });
-
-  box.innerHTML = '';
-  countEl.textContent = items.filter((it) => normalizeName(it.name)).length + ' 行';
-  items.forEach((it, idx) => {
-    const nameNorm = normalizeName(it.name);
-    const row = document.createElement('div');
-    const rowIssues = issueMap.get(idx) || [];
-    const hasDuplicate = rowIssues.some((x) => x.type === 'duplicate');
-    const hasInvalid = rowIssues.some((x) => x.type === 'invalid-limit');
-    row.className = 'editor-row' + (hasDuplicate ? ' duplicate' : '') + (hasInvalid ? ' invalid' : '');
-
-    const name = document.createElement('input');
-    name.className = 'input' + (hasDuplicate ? ' duplicate' : '');
-    name.type = 'text';
-    name.value = it.name || '';
-    name.placeholder = placeholder;
-    name.addEventListener('input', () => {
-      state.draft[kind][idx].name = name.value;
-      renderAll();
-    });
-
-    const limit = document.createElement('input');
-    limit.className = 'input num' + (hasInvalid ? ' invalid' : '');
-    limit.type = 'number';
-    limit.min = '0.1';
-    limit.step = '0.1';
-    limit.placeholder = fmtGiB(globalLimit);
-    limit.value = it.limitValue || '';
-    limit.addEventListener('input', () => {
-      state.draft[kind][idx].limitValue = limit.value;
-      renderAll();
-    });
-
-    const stateCell = document.createElement('div');
-    stateCell.className = 'row-state';
-    if (!nameNorm) {
-      stateCell.textContent = '';
-    } else if (hasDuplicate) {
-      stateCell.classList.add('warn');
-      stateCell.textContent = '!';
-      stateCell.title = '名称重复';
-    } else if (hasInvalid) {
-      stateCell.classList.add('bad');
-      stateCell.textContent = '!';
-      stateCell.title = '上限无效';
-    } else {
-      stateCell.classList.add('ok');
-      stateCell.textContent = '✓';
-      stateCell.title = '有效';
-    }
-
-    const remove = document.createElement('button');
-    remove.className = 'icon-btn remove';
-    remove.type = 'button';
-    remove.textContent = '×';
-    remove.title = '删除';
-    remove.addEventListener('click', () => {
-      state.draft[kind].splice(idx, 1);
-      renderAll();
-    });
-
-    row.appendChild(name);
-    row.appendChild(limit);
-    row.appendChild(stateCell);
-    row.appendChild(remove);
-    box.appendChild(row);
-  });
-
-  const addRow = document.createElement('div');
-  addRow.className = 'editor-row add';
-
-  const addName = document.createElement('input');
-  addName.className = 'input';
-  addName.type = 'text';
-  addName.placeholder = placeholder + '（新增）';
-
-  const addLimit = document.createElement('input');
-  addLimit.className = 'input num';
-  addLimit.type = 'number';
-  addLimit.min = '0.1';
-  addLimit.step = '0.1';
-  addLimit.placeholder = fmtGiB(globalLimit);
-
-  const addState = document.createElement('div');
-  addState.className = 'row-state ' + (normalizeName(addName.value) ? 'ok' : '');
-  addState.textContent = '';
-
-  const addBtn = document.createElement('button');
-  addBtn.className = 'icon-btn add';
-  addBtn.type = 'button';
-  addBtn.textContent = '+';
-  addBtn.title = '添加';
-  addBtn.addEventListener('click', () => {
-    const name = normalizeName(addName.value);
-    if (!name) return;
-    const existing = state.draft[kind].findIndex((it) => normalizeName(it.name) === name);
-    const row = {
-      name,
-      custom: parsePositive(addLimit.value) > 0,
-      limitValue: parsePositive(addLimit.value) > 0 ? fmtGiB(parsePositive(addLimit.value)) : '',
-    };
-    if (existing >= 0) {
-      state.draft[kind][existing] = row;
-    } else {
-      state.draft[kind].push(row);
-    }
-    renderAll();
-  });
-
-  function updateAddState() {
-    const name = normalizeName(addName.value);
-    addState.className = 'row-state ' + (name ? 'ok' : '');
-    addState.textContent = name ? '✓' : '';
-  }
-  addName.addEventListener('input', updateAddState);
-  addName.addEventListener('keydown', (e) => { if (e.key === 'Enter') addBtn.click(); });
-  addLimit.addEventListener('keydown', (e) => { if (e.key === 'Enter') addBtn.click(); });
-
-  addRow.appendChild(addName);
-  addRow.appendChild(addLimit);
-  addRow.appendChild(addState);
-  addRow.appendChild(addBtn);
-  box.appendChild(addRow);
-
-  if (!issues.length) {
-    validationEl.className = 'validation';
-    validationEl.textContent = '当前无校验错误。';
-  } else {
-    validationEl.className = 'validation error';
-    validationEl.textContent = issues[0].message;
-  }
-}
-
-function renderAll() {
-  summarizeLines('effectiveCommands', 'effectiveCommandCount', state.effective.commands, state.effectiveLimits.commands, state.activeLimits.command);
-  summarizeLines('effectiveGroups', 'effectiveGroupCount', state.effective.groups, state.effectiveLimits.groups, state.activeLimits.group);
-  renderDefaults('defaultCommands', state.defaults.commands);
-  renderDefaults('defaultGroups', state.defaults.groups);
-  renderEditor('commands');
-  renderEditor('groups');
-  updateDirtyState();
+  return mergedNames.map((name) => ({
+    id: nextPillId(kind),
+    baselineName: name,
+    name,
+    sourceDefault: defaultSet.has(name),
+    removed: defaultSet.has(name) && !effectiveSet.has(name),
+    custom: parsePositive((limitMap || {})[name]) > 0,
+    limitValue: parsePositive((limitMap || {})[name]) > 0 ? fmtGiB((limitMap || {})[name]) : '',
+  }));
 }
 
 function setFromRuleState(data) {
-  state.defaults.commands = normalizeNameList(data.defaultCommands || []);
-  state.defaults.groups = normalizeNameList(data.defaultGroups || []);
-  state.effective.commands = normalizeNameList(data.effectiveCommands || []);
-  state.effective.groups = normalizeNameList(data.effectiveGroups || []);
+  state.defaults.commands = (data.defaultCommands || []).map(normalizeName).filter(Boolean);
+  state.defaults.groups = (data.defaultGroups || []).map(normalizeName).filter(Boolean);
+  state.effective.commands = (data.effectiveCommands || []).map(normalizeName).filter(Boolean);
+  state.effective.groups = (data.effectiveGroups || []).map(normalizeName).filter(Boolean);
   state.baseLimits.command = parsePositive(data.baseCommandLimitGiB) || parsePositive(data.commandLimitGiB) || 2;
   state.baseLimits.group = parsePositive(data.baseGroupLimitGiB) || parsePositive(data.groupLimitGiB) || 6;
   state.activeLimits.command = parsePositive(data.commandLimitGiB) || state.baseLimits.command;
@@ -1038,91 +760,447 @@ function setFromRuleState(data) {
   state.globalLimits.group = state.activeLimits.group;
   state.effectiveLimits.commands = data.commandLimitsGiB || {};
   state.effectiveLimits.groups = data.groupLimitsGiB || {};
-  state.draft.commands = itemsFromNames(state.effective.commands, state.effectiveLimits.commands, state.globalLimits.command).map(makeDraftRow);
-  state.draft.groups = itemsFromNames(state.effective.groups, state.effectiveLimits.groups, state.globalLimits.group).map(makeDraftRow);
+  state.draft.commands = buildMergedDraft('commands', state.defaults.commands, state.effective.commands, state.effectiveLimits.commands, state.globalLimits.command);
+  state.draft.groups = buildMergedDraft('groups', state.defaults.groups, state.effective.groups, state.effectiveLimits.groups, state.globalLimits.group);
+  state.editing = null;
   document.getElementById('globalCommandLimit').value = fmtGiB(state.globalLimits.command);
   document.getElementById('globalGroupLimit').value = fmtGiB(state.globalLimits.group);
   document.getElementById('baseLimitsHint').textContent =
     '环境默认上限: 命令 ' + fmtGiB(state.baseLimits.command) + 'GiB / 程序组 ' + fmtGiB(state.baseLimits.group) +
-    'GiB。输入不同值后保存，将写入 rules.json 的 limits override。';
+    'GiB。单项上限留空时跟随当前全局上限。';
   document.getElementById('meta').textContent = '规则文件: ' + (data.configPath || '(not set)');
-  state.restoring = false;
   renderAll();
 }
 
-function toSet(arr) {
-  return new Set(normalizeNameList(arr));
-}
-
-function computePatch(globalCommand, globalGroup) {
-  const targetCommands = normalizeItems(state.draft.commands.map((it) => ({
-    name: it.name,
-    custom: parsePositive(it.limitValue) > 0,
-    limit: parsePositive(it.limitValue) > 0 ? parsePositive(it.limitValue) : globalCommand,
-  })), globalCommand);
-  const targetGroups = normalizeItems(state.draft.groups.map((it) => ({
-    name: it.name,
-    custom: parsePositive(it.limitValue) > 0,
-    limit: parsePositive(it.limitValue) > 0 ? parsePositive(it.limitValue) : globalGroup,
-  })), globalGroup);
-
-  const targetCommandNames = targetCommands.map((x) => x.name);
-  const targetGroupNames = targetGroups.map((x) => x.name);
-  const defaultCommandSet = toSet(state.defaults.commands);
-  const defaultGroupSet = toSet(state.defaults.groups);
-  const targetCommandSet = toSet(targetCommandNames);
-  const targetGroupSet = toSet(targetGroupNames);
-
-  const cmdLimitsGiB = {};
-  targetCommands.forEach((it) => {
-    if (it.custom && Math.abs(it.limit - globalCommand) > EPS) cmdLimitsGiB[it.name] = roundGiB(it.limit);
+function getIssues(kind) {
+  const issues = [];
+  const buckets = new Map();
+  (state.draft[kind] || []).forEach((item, idx) => {
+    if (item.removed) return;
+    const name = normalizeName(item.name);
+    if (!name) return;
+    if (!buckets.has(name)) buckets.set(name, []);
+    buckets.get(name).push(idx);
+    if ((item.limitValue || '').trim() !== '' && parsePositive(item.limitValue) <= 0) {
+      issues.push({ idx, type: 'invalid-limit', message: name + ' 的单项上限必须大于 0' });
+    }
   });
-  const grpLimitsGiB = {};
-  targetGroups.forEach((it) => {
-    if (it.custom && Math.abs(it.limit - globalGroup) > EPS) grpLimitsGiB[it.name] = roundGiB(it.limit);
-  });
-
-  return {
-    limits: {
-      commandGiB: Math.abs(globalCommand - state.baseLimits.command) > EPS ? roundGiB(globalCommand) : 0,
-      groupGiB: Math.abs(globalGroup - state.baseLimits.group) > EPS ? roundGiB(globalGroup) : 0,
-    },
-    commands: {
-      add: targetCommandNames.filter((v) => !defaultCommandSet.has(v)),
-      remove: state.defaults.commands.filter((v) => !targetCommandSet.has(v)),
-      limitsGiB: cmdLimitsGiB,
-    },
-    groups: {
-      add: targetGroupNames.filter((v) => !defaultGroupSet.has(v)),
-      remove: state.defaults.groups.filter((v) => !targetGroupSet.has(v)),
-      limitsGiB: grpLimitsGiB,
-    },
-  };
+  for (const [name, indexes] of buckets.entries()) {
+    if (indexes.length > 1) {
+      indexes.forEach((idx) => issues.push({ idx, type: 'duplicate', message: '重复规则: ' + name }));
+    }
+  }
+  return issues;
 }
 
-function computePatchFromDraft() {
-  const globalCommand = parsePositive(document.getElementById('globalCommandLimit').value) || state.baseLimits.command;
-  const globalGroup = parsePositive(document.getElementById('globalGroupLimit').value) || state.baseLimits.group;
-  return computePatch(globalCommand, globalGroup);
+function hasValidationErrors() {
+  return getIssues('commands').length > 0 || getIssues('groups').length > 0;
 }
 
-function computePatchFromEffective() {
+function createCurrentPatch() {
+  const defaultCommandSet = new Set(state.defaults.commands);
+  const defaultGroupSet = new Set(state.defaults.groups);
   return {
     limits: {
       commandGiB: Math.abs(state.activeLimits.command - state.baseLimits.command) > EPS ? roundGiB(state.activeLimits.command) : 0,
       groupGiB: Math.abs(state.activeLimits.group - state.baseLimits.group) > EPS ? roundGiB(state.activeLimits.group) : 0,
     },
     commands: {
-      add: state.effective.commands.filter((v) => !toSet(state.defaults.commands).has(v)),
-      remove: state.defaults.commands.filter((v) => !toSet(state.effective.commands).has(v)),
+      add: state.effective.commands.filter((name) => !defaultCommandSet.has(name)),
+      remove: state.defaults.commands.filter((name) => !state.effective.commands.includes(name)),
       limitsGiB: Object.assign({}, state.effectiveLimits.commands || {}),
     },
     groups: {
-      add: state.effective.groups.filter((v) => !toSet(state.defaults.groups).has(v)),
-      remove: state.defaults.groups.filter((v) => !toSet(state.effective.groups).has(v)),
+      add: state.effective.groups.filter((name) => !defaultGroupSet.has(name)),
+      remove: state.defaults.groups.filter((name) => !state.effective.groups.includes(name)),
       limitsGiB: Object.assign({}, state.effectiveLimits.groups || {}),
     },
   };
+}
+
+function createDraftPatch() {
+  const globalCommand = parsePositive(document.getElementById('globalCommandLimit').value) || state.baseLimits.command;
+  const globalGroup = parsePositive(document.getElementById('globalGroupLimit').value) || state.baseLimits.group;
+  const commandItems = activeItems('commands').map((item) => ({
+    name: normalizeName(item.name),
+    custom: parsePositive(item.limitValue) > 0,
+    limit: parsePositive(item.limitValue) > 0 ? parsePositive(item.limitValue) : globalCommand,
+  })).filter((item) => item.name);
+  const groupItems = activeItems('groups').map((item) => ({
+    name: normalizeName(item.name),
+    custom: parsePositive(item.limitValue) > 0,
+    limit: parsePositive(item.limitValue) > 0 ? parsePositive(item.limitValue) : globalGroup,
+  })).filter((item) => item.name);
+
+  const commandNames = Array.from(new Set(commandItems.map((item) => item.name)));
+  const groupNames = Array.from(new Set(groupItems.map((item) => item.name)));
+  const defaultCommandSet = new Set(state.defaults.commands);
+  const defaultGroupSet = new Set(state.defaults.groups);
+  const commandSet = new Set(commandNames);
+  const groupSet = new Set(groupNames);
+  const cmdLimitsGiB = {};
+  commandItems.forEach((item) => {
+    if (item.custom && Math.abs(item.limit - globalCommand) > EPS) cmdLimitsGiB[item.name] = roundGiB(item.limit);
+  });
+  const grpLimitsGiB = {};
+  groupItems.forEach((item) => {
+    if (item.custom && Math.abs(item.limit - globalGroup) > EPS) grpLimitsGiB[item.name] = roundGiB(item.limit);
+  });
+  return {
+    limits: {
+      commandGiB: Math.abs(globalCommand - state.baseLimits.command) > EPS ? roundGiB(globalCommand) : 0,
+      groupGiB: Math.abs(globalGroup - state.baseLimits.group) > EPS ? roundGiB(globalGroup) : 0,
+    },
+    commands: {
+      add: commandNames.filter((name) => !defaultCommandSet.has(name)),
+      remove: state.defaults.commands.filter((name) => !commandSet.has(name)),
+      limitsGiB: cmdLimitsGiB,
+    },
+    groups: {
+      add: groupNames.filter((name) => !defaultGroupSet.has(name)),
+      remove: state.defaults.groups.filter((name) => !groupSet.has(name)),
+      limitsGiB: grpLimitsGiB,
+    },
+  };
+}
+
+function updateBanner() {
+  if (hasValidationErrors()) {
+    updateStatus('error', '存在未提交更改', '请先修正重复名称或非法上限，然后再保存。');
+    document.getElementById('saveBtn').disabled = true;
+    return;
+  }
+  const dirty = JSON.stringify(createDraftPatch()) !== JSON.stringify(createCurrentPatch());
+  document.getElementById('saveBtn').disabled = false;
+  if (dirty) {
+    updateStatus('dirty', '存在未提交更改', '当前胶囊内容尚未写入规则文件，保存后才会立即生效。');
+  } else {
+    updateStatus('saved', '所有更改已保存', '当前页面内容与已生效规则一致。');
+  }
+}
+
+function enterEdit(kind, id) {
+  if (state.editing && state.editing.kind === kind && state.editing.id === id) return;
+  const item = (state.draft[kind] || []).find((it) => it.id === id);
+  if (!item) return;
+  state.editing = {
+    kind,
+    id,
+    snapshot: {
+      name: item.name,
+      limitValue: item.limitValue,
+      removed: item.removed,
+    },
+  };
+  renderAll();
+  requestAnimationFrame(() => {
+    const target = document.querySelector('[data-edit-name="' + id + '"]');
+    if (target) target.focus();
+  });
+}
+
+function cancelEdit() {
+  if (!state.editing) return;
+  const { kind, id, snapshot } = state.editing;
+  const item = (state.draft[kind] || []).find((it) => it.id === id);
+  if (item) {
+    item.name = snapshot.name;
+    item.limitValue = snapshot.limitValue;
+    item.removed = snapshot.removed;
+    if (!normalizeName(item.name) && !item.sourceDefault && !item.baselineName) {
+      state.draft[kind] = state.draft[kind].filter((it) => it.id !== id);
+    }
+  }
+  state.editing = null;
+  renderAll();
+}
+
+function commitEdit() {
+  if (!state.editing) return;
+  const { kind, id } = state.editing;
+  const item = (state.draft[kind] || []).find((it) => it.id === id);
+  if (!item) {
+    state.editing = null;
+    renderAll();
+    return;
+  }
+  item.name = normalizeName(item.name);
+  if (!item.name) {
+    if (item.sourceDefault) {
+      item.name = item.baselineName;
+      item.removed = true;
+      item.limitValue = '';
+    } else {
+      state.draft[kind] = state.draft[kind].filter((it) => it.id !== id);
+    }
+  }
+  state.editing = null;
+  renderAll();
+}
+
+function toggleRemove(kind, id) {
+  const items = state.draft[kind] || [];
+  const item = items.find((it) => it.id === id);
+  if (!item) return;
+  if (item.sourceDefault) {
+    item.removed = !item.removed;
+    if (item.removed) {
+      item.name = item.baselineName;
+      item.limitValue = '';
+    }
+  } else {
+    state.draft[kind] = items.filter((it) => it.id !== id);
+  }
+  if (state.editing && state.editing.id === id && state.editing.kind === kind) {
+    state.editing = null;
+  }
+  renderAll();
+}
+
+function addPill(kind) {
+  const item = {
+    id: nextPillId(kind),
+    baselineName: '',
+    name: '',
+    sourceDefault: false,
+    removed: false,
+    custom: false,
+    limitValue: '',
+  };
+  state.draft[kind].push(item);
+  enterEdit(kind, item.id);
+}
+
+function pillClasses(kind, item, idx, issues) {
+  const rowIssues = issues.get(idx) || [];
+  const duplicate = rowIssues.some((it) => it.type === 'duplicate');
+  const invalid = rowIssues.some((it) => it.type === 'invalid-limit');
+  const editing = state.editing && state.editing.kind === kind && state.editing.id === item.id;
+  const classes = ['pill'];
+  if (item.sourceDefault) classes.push('default-item');
+  if (!item.sourceDefault) classes.push('added-item');
+  if (parsePositive(item.limitValue) > 0) classes.push('custom-item');
+  if (item.removed) classes.push('removed-item');
+  if (duplicate) classes.push('duplicate-item');
+  if (invalid) classes.push('invalid-item');
+  if (editing) classes.push('editing');
+  return classes.join(' ');
+}
+
+function renderCanvas(kind) {
+  const canvas = document.getElementById(kind === 'commands' ? 'cmdCanvas' : 'grpCanvas');
+  const countEl = document.getElementById(kind === 'commands' ? 'commandCount' : 'groupCount');
+  const validationEl = document.getElementById(kind === 'commands' ? 'cmdValidation' : 'grpValidation');
+  const issues = getIssues(kind);
+  const issueMap = new Map();
+  issues.forEach((it) => {
+    if (!issueMap.has(it.idx)) issueMap.set(it.idx, []);
+    issueMap.get(it.idx).push(it);
+  });
+  canvas.innerHTML = '';
+  countEl.textContent = activeItems(kind).filter((item) => normalizeName(item.name)).length + ' 项';
+
+  state.draft[kind].forEach((item, idx) => {
+    const editing = state.editing && state.editing.kind === kind && state.editing.id === item.id;
+    const rowIssues = issueMap.get(idx) || [];
+    const duplicate = rowIssues.some((it) => it.type === 'duplicate');
+    const invalid = rowIssues.some((it) => it.type === 'invalid-limit');
+    const pill = document.createElement('div');
+    pill.className = pillClasses(kind, item, idx, issueMap);
+    pill.dataset.kind = kind;
+    pill.dataset.id = item.id;
+
+    if (editing) {
+      const edit = document.createElement('div');
+      edit.className = 'pill-edit';
+      const grid = document.createElement('div');
+      grid.className = 'edit-grid';
+
+      const name = document.createElement('input');
+      name.className = 'input' + (duplicate ? ' duplicate' : '');
+      name.type = 'text';
+      name.value = item.name;
+      name.placeholder = kind === 'commands' ? '输入命令名' : '输入程序组名';
+      name.dataset.editName = item.id;
+      name.addEventListener('input', () => {
+        item.name = name.value;
+        renderAll();
+      });
+      name.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          commitEdit();
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelEdit();
+        }
+      });
+
+      const limit = document.createElement('input');
+      limit.className = 'input num' + (invalid ? ' invalid' : '');
+      limit.type = 'number';
+      limit.min = '0.1';
+      limit.step = '0.1';
+      limit.placeholder = fmtGiB(kind === 'commands' ? state.globalLimits.command : state.globalLimits.group);
+      limit.value = item.limitValue || '';
+      limit.addEventListener('input', () => {
+        item.limitValue = limit.value;
+        renderAll();
+      });
+      limit.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          commitEdit();
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelEdit();
+        }
+      });
+
+      grid.appendChild(name);
+      grid.appendChild(limit);
+
+      const actions = document.createElement('div');
+      actions.className = 'edit-actions';
+      const tags = document.createElement('div');
+      tags.className = 'pill-meta';
+      const sourceTag = document.createElement('span');
+      sourceTag.className = 'tag ' + (item.sourceDefault ? 'default' : 'added');
+      sourceTag.textContent = item.sourceDefault ? '默认' : '新增';
+      tags.appendChild(sourceTag);
+
+      const tools = document.createElement('div');
+      tools.className = 'edit-tools';
+
+      const reset = document.createElement('button');
+      reset.className = 'tiny-btn warn';
+      reset.type = 'button';
+      reset.textContent = '回退全局';
+      reset.addEventListener('click', () => {
+        item.limitValue = '';
+        renderAll();
+      });
+
+      const cancel = document.createElement('button');
+      cancel.className = 'tiny-btn';
+      cancel.type = 'button';
+      cancel.textContent = '取消';
+      cancel.addEventListener('click', cancelEdit);
+
+      const remove = document.createElement('button');
+      remove.className = 'tiny-btn danger';
+      remove.type = 'button';
+      remove.textContent = item.sourceDefault ? '删除候选' : '删除';
+      remove.addEventListener('click', () => toggleRemove(kind, item.id));
+
+      tools.appendChild(reset);
+      tools.appendChild(cancel);
+      tools.appendChild(remove);
+      actions.appendChild(tags);
+      actions.appendChild(tools);
+      edit.appendChild(grid);
+      edit.appendChild(actions);
+      pill.appendChild(edit);
+    } else {
+      pill.addEventListener('dblclick', () => enterEdit(kind, item.id));
+      const view = document.createElement('div');
+      view.className = 'pill-view';
+
+      const name = document.createElement('span');
+      name.className = 'pill-name';
+      name.textContent = item.removed ? item.baselineName : normalizeName(item.name || item.baselineName);
+      view.appendChild(name);
+
+      const meta = document.createElement('div');
+      meta.className = 'pill-meta';
+      const sourceTag = document.createElement('span');
+      sourceTag.className = 'tag ' + (item.sourceDefault ? 'default' : 'added');
+      sourceTag.textContent = item.sourceDefault ? '默认' : '新增';
+      meta.appendChild(sourceTag);
+
+      if (parsePositive(item.limitValue) > 0 && !item.removed) {
+        const limitTag = document.createElement('span');
+        limitTag.className = 'tag limit';
+        limitTag.textContent = fmtGiB(item.limitValue) + 'GiB';
+        meta.appendChild(limitTag);
+      }
+
+      if (item.removed) {
+        const removedTag = document.createElement('span');
+        removedTag.className = 'tag removed';
+        removedTag.textContent = '删除候选';
+        meta.appendChild(removedTag);
+      } else if (duplicate) {
+        const dupTag = document.createElement('span');
+        dupTag.className = 'tag error';
+        dupTag.textContent = '重复';
+        meta.appendChild(dupTag);
+      } else if (invalid) {
+        const badTag = document.createElement('span');
+        badTag.className = 'tag error';
+        badTag.textContent = '上限无效';
+        meta.appendChild(badTag);
+      } else if (!parsePositive(item.limitValue)) {
+        const globalTag = document.createElement('span');
+        globalTag.className = 'tag';
+        globalTag.textContent = '跟随全局';
+        meta.appendChild(globalTag);
+      }
+
+      const actions = document.createElement('div');
+      actions.className = 'pill-actions';
+      const editBtn = document.createElement('button');
+      editBtn.className = 'icon-btn';
+      editBtn.type = 'button';
+      editBtn.textContent = '✎';
+      editBtn.title = '编辑';
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        enterEdit(kind, item.id);
+      });
+      actions.appendChild(editBtn);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'icon-btn ' + (item.removed ? 'undo' : 'remove');
+      removeBtn.type = 'button';
+      removeBtn.textContent = item.removed ? '↺' : '×';
+      removeBtn.title = item.removed ? '恢复' : (item.sourceDefault ? '标记删除' : '删除');
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleRemove(kind, item.id);
+      });
+      actions.appendChild(removeBtn);
+
+      pill.appendChild(view);
+      pill.appendChild(meta);
+      pill.appendChild(actions);
+    }
+
+    canvas.appendChild(pill);
+  });
+
+  const add = document.createElement('button');
+  add.className = 'pill-add';
+  add.type = 'button';
+  add.innerHTML = '<span class="icon-btn add">+</span><span>新增' + (kind === 'commands' ? '命令规则' : '程序组规则') + '</span>';
+  add.addEventListener('click', () => addPill(kind));
+  canvas.appendChild(add);
+
+  if (!issues.length) {
+    validationEl.className = 'validation';
+    validationEl.textContent = '双击胶囊直接修改，删除默认规则会先变成“删除候选”，保存后才真正生效。';
+  } else {
+    validationEl.className = 'validation error';
+    validationEl.textContent = issues[0].message;
+  }
+}
+
+function renderAll() {
+  renderCanvas('commands');
+  renderCanvas('groups');
+  updateBanner();
 }
 
 async function loadRules(message) {
@@ -1130,12 +1208,10 @@ async function loadRules(message) {
   if (!res.ok) throw new Error(await res.text());
   const data = await res.json();
   setFromRuleState(data);
-  if (message) {
-    updateStatus('saved', message, '页面已刷新为当前正在生效的规则。');
-  }
+  if (message) updateStatus('saved', message, '页面已同步为当前正在生效的规则。');
 }
 
-async function savePatch(patch, okTitle, okNote) {
+async function savePatch(patch, title, note) {
   if (hasValidationErrors()) {
     updateStatus('error', '存在未提交更改', '请先修正重复名称或非法上限，然后再保存。');
     return;
@@ -1151,17 +1227,11 @@ async function savePatch(patch, okTitle, okNote) {
   }
   const data = await res.json();
   setFromRuleState(data);
-  updateStatus('saved', okTitle, okNote);
-}
-
-function applyGlobalDraftLimits() {
-  state.globalLimits.command = parsePositive(document.getElementById('globalCommandLimit').value) || state.baseLimits.command;
-  state.globalLimits.group = parsePositive(document.getElementById('globalGroupLimit').value) || state.baseLimits.group;
-  renderAll();
+  updateStatus('saved', title, note);
 }
 
 document.getElementById('saveBtn').addEventListener('click', async () => {
-  await savePatch(computePatchFromDraft(), '所有更改已保存', '保存成功，规则已热加载生效。');
+  await savePatch(createDraftPatch(), '所有更改已保存', '保存成功，规则已热加载生效。');
 });
 
 document.getElementById('reloadBtn').addEventListener('click', async () => {
@@ -1169,21 +1239,30 @@ document.getElementById('reloadBtn').addEventListener('click', async () => {
 });
 
 document.getElementById('restoreBtn').addEventListener('click', async () => {
-  state.restoring = true;
   const patch = {
     limits: { commandGiB: 0, groupGiB: 0 },
     commands: { add: [], remove: [], limitsGiB: {} },
     groups: { add: [], remove: [], limitsGiB: {} },
   };
-  await savePatch(patch, '已恢复默认并生效', '页面内容已切回默认规则并立即生效。');
+  await savePatch(patch, '已恢复默认并生效', '所有规则已回到默认集合并立即生效。');
 });
 
-document.getElementById('globalCommandLimit').addEventListener('input', applyGlobalDraftLimits);
-document.getElementById('globalGroupLimit').addEventListener('input', applyGlobalDraftLimits);
+document.getElementById('globalCommandLimit').addEventListener('input', renderAll);
+document.getElementById('globalGroupLimit').addEventListener('input', renderAll);
+
+document.addEventListener('mousedown', (e) => {
+  if (!state.editing) return;
+  const active = document.querySelector('.pill.editing');
+  if (active && !active.contains(e.target)) {
+    commitEdit();
+  }
+});
 
 loadRules('所有更改已保存').catch((e) => {
   updateStatus('error', '加载失败', String(e));
 });
+
 </script>
-</body>
-</html>`
++</body>
++</html>`
+
