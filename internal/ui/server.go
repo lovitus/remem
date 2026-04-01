@@ -490,12 +490,25 @@ const rulesHTML = `<!doctype html>
     border-color: #d28a93;
     background: #fff0f2;
   }
+  .pill.unsaved-item:not(.editing) {
+    animation: unsavedPulse 1.6s ease-in-out infinite;
+  }
   body[data-theme="dark"] .pill.default-item { border-color: #35506f; }
   body[data-theme="dark"] .pill.added-item { border-color: #2f6749; background: linear-gradient(180deg, rgba(19,43,35,.92), rgba(14,27,24,.94)); }
   body[data-theme="dark"] .pill.custom-item { background: linear-gradient(180deg, rgba(18,32,47,.95), rgba(14,24,35,.94)); box-shadow: inset 0 0 0 1px rgba(239,190,88,.16); }
   body[data-theme="dark"] .pill.removed-item { border-color: #7a434a; background: linear-gradient(180deg, rgba(52,26,30,.78), rgba(31,16,20,.88)); }
   body[data-theme="dark"] .pill.duplicate-item { border-color: #c89b3b; background: linear-gradient(180deg, rgba(72,53,24,.92), rgba(42,29,13,.90)); }
   body[data-theme="dark"] .pill.invalid-item { border-color: #c5575d; background: linear-gradient(180deg, rgba(73,30,36,.92), rgba(39,18,22,.90)); }
+  @keyframes unsavedPulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(212, 176, 73, 0);
+    }
+    50% {
+      transform: scale(1.02);
+      box-shadow: 0 0 0 4px rgba(212, 176, 73, 0.10);
+    }
+  }
   .pill.editing {
     border-radius: 18px;
     padding: 12px;
@@ -916,19 +929,19 @@ function setFromRuleState(data) {
 function getIssues(kind) {
   const issues = [];
   const buckets = new Map();
-  (state.draft[kind] || []).forEach((item, idx) => {
+  (state.draft[kind] || []).forEach((item) => {
     if (item.removed) return;
     const name = normalizeName(item.name);
     if (!name) return;
     if (!buckets.has(name)) buckets.set(name, []);
-    buckets.get(name).push(idx);
+    buckets.get(name).push(item.id);
     if ((item.limitValue || '').trim() !== '' && parsePositive(item.limitValue) <= 0) {
-      issues.push({ idx, type: 'invalid-limit', message: name + ' 的单项上限必须大于 0' });
+      issues.push({ id: item.id, type: 'invalid-limit', message: name + ' 的单项上限必须大于 0' });
     }
   });
-  for (const [name, indexes] of buckets.entries()) {
-    if (indexes.length > 1) {
-      indexes.forEach((idx) => issues.push({ idx, type: 'duplicate', message: '重复规则: ' + name }));
+  for (const [name, ids] of buckets.entries()) {
+    if (ids.length > 1) {
+      ids.forEach((id) => issues.push({ id, type: 'duplicate', message: '重复规则: ' + name }));
     }
   }
   return issues;
@@ -1117,8 +1130,41 @@ function addPill(kind) {
   enterEdit(kind, item.id);
 }
 
-function pillClasses(kind, item, idx, issues) {
-  const rowIssues = issues.get(idx) || [];
+function effectiveLimitValue(kind, name) {
+  const limitMap = state.effectiveLimits[kind] || {};
+  const limit = parsePositive(limitMap[normalizeName(name)]);
+  return limit > 0 ? fmtGiB(limit) : '';
+}
+
+function isUnsavedItem(kind, item) {
+  const baseline = normalizeName(item.baselineName);
+  const current = normalizeName(item.name);
+  const effectiveSet = new Set(state.effective[kind] || []);
+
+  if (!baseline) return !!current || !!(item.limitValue || '').trim();
+
+  const savedRemoved = item.sourceDefault ? !effectiveSet.has(baseline) : false;
+  if (current !== baseline) return true;
+  if (item.removed !== savedRemoved) return true;
+  if ((item.limitValue || '').trim() !== effectiveLimitValue(kind, baseline)) return true;
+  return false;
+}
+
+function sortDraftItems(kind) {
+  return [...(state.draft[kind] || [])].sort((a, b) => {
+    const unsavedA = isUnsavedItem(kind, a) ? 1 : 0;
+    const unsavedB = isUnsavedItem(kind, b) ? 1 : 0;
+    if (unsavedA !== unsavedB) return unsavedA - unsavedB;
+    const nameA = normalizeName(a.name || a.baselineName);
+    const nameB = normalizeName(b.name || b.baselineName);
+    const cmp = nameA.localeCompare(nameB, 'en');
+    if (cmp !== 0) return cmp;
+    return a.id.localeCompare(b.id, 'en');
+  });
+}
+
+function pillClasses(kind, item, issues) {
+  const rowIssues = issues.get(item.id) || [];
   const duplicate = rowIssues.some((it) => it.type === 'duplicate');
   const invalid = rowIssues.some((it) => it.type === 'invalid-limit');
   const editing = state.editing && state.editing.kind === kind && state.editing.id === item.id;
@@ -1129,6 +1175,7 @@ function pillClasses(kind, item, idx, issues) {
   if (item.removed) classes.push('removed-item');
   if (duplicate) classes.push('duplicate-item');
   if (invalid) classes.push('invalid-item');
+  if (isUnsavedItem(kind, item)) classes.push('unsaved-item');
   if (editing) classes.push('editing');
   return classes.join(' ');
 }
@@ -1140,19 +1187,19 @@ function renderCanvas(kind) {
   const issues = getIssues(kind);
   const issueMap = new Map();
   issues.forEach((it) => {
-    if (!issueMap.has(it.idx)) issueMap.set(it.idx, []);
-    issueMap.get(it.idx).push(it);
+    if (!issueMap.has(it.id)) issueMap.set(it.id, []);
+    issueMap.get(it.id).push(it);
   });
   canvas.innerHTML = '';
   countEl.textContent = activeItems(kind).filter((item) => normalizeName(item.name)).length + ' 项';
 
-  state.draft[kind].forEach((item, idx) => {
+  sortDraftItems(kind).forEach((item) => {
     const editing = state.editing && state.editing.kind === kind && state.editing.id === item.id;
-    const rowIssues = issueMap.get(idx) || [];
+    const rowIssues = issueMap.get(item.id) || [];
     const duplicate = rowIssues.some((it) => it.type === 'duplicate');
     const invalid = rowIssues.some((it) => it.type === 'invalid-limit');
     const pill = document.createElement('div');
-    pill.className = pillClasses(kind, item, idx, issueMap);
+    pill.className = pillClasses(kind, item, issueMap);
     pill.dataset.kind = kind;
     pill.dataset.id = item.id;
 
