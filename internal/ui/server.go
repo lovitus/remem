@@ -191,6 +191,27 @@ const rulesHTML = `<!doctype html>
     --pill-border: #2a4258;
     --shadow: 0 18px 34px rgba(0, 0, 0, .28);
   }
+  body[data-theme="light"] {
+    --bg: #f4f7fb;
+    --bg2: #edf3fa;
+    --panel: rgba(255, 255, 255, .98);
+    --panel-soft: rgba(248, 251, 255, .98);
+    --line: #c7d6e6;
+    --line-soft: #d8e3ef;
+    --text: #163047;
+    --muted: #587089;
+    --muted-soft: #6d8297;
+    --ok: #198754;
+    --warn: #ab7a00;
+    --danger: #c23b4a;
+    --info: #0b7cc1;
+    --save: #1f8a5c;
+    --secondary: #5d7387;
+    --focus: #1a84e8;
+    --pill: #f7fbff;
+    --pill-border: #bfd2e6;
+    --shadow: 0 10px 24px rgba(29, 57, 85, .12);
+  }
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -219,6 +240,11 @@ const rulesHTML = `<!doctype html>
     border-bottom: 1px solid rgba(56, 79, 105, .58);
     box-shadow: 0 12px 28px rgba(0,0,0,.15);
   }
+  body[data-theme="light"] .hero {
+    background: linear-gradient(180deg, rgba(244,247,251,.96), rgba(244,247,251,.90));
+    border-bottom-color: rgba(174, 193, 212, .75);
+    box-shadow: 0 10px 24px rgba(42, 73, 104, .10);
+  }
   .hero-inner {
     max-width: 1240px;
     margin: 0 auto;
@@ -233,13 +259,13 @@ const rulesHTML = `<!doctype html>
   }
   h1 {
     margin: 0;
-    font-size: 28px;
+    font-size: 30px;
     letter-spacing: .2px;
   }
   .sub {
     margin-top: 6px;
     color: var(--muted);
-    font-size: 13px;
+    font-size: 14px;
     word-break: break-all;
   }
   .hero-actions {
@@ -254,9 +280,9 @@ const rulesHTML = `<!doctype html>
     color: #fff;
     padding: 10px 14px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
-    min-height: 40px;
+    min-height: 44px;
     box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
   }
   .btn:disabled { opacity: .45; cursor: not-allowed; }
@@ -278,7 +304,7 @@ const rulesHTML = `<!doctype html>
   .banner strong { font-size: 13px; }
   .banner-note {
     color: var(--muted);
-    font-size: 12px;
+    font-size: 13px;
   }
   .banner.saved strong { color: var(--ok); }
   .banner.dirty strong { color: var(--warn); }
@@ -296,7 +322,8 @@ const rulesHTML = `<!doctype html>
     background: linear-gradient(180deg, #122237, #112031);
     color: #c6d8ee;
     padding: 12px 14px;
-    line-height: 1.6;
+    line-height: 1.65;
+    font-size: 15px;
   }
   .intro b { color: #eff6ff; }
   .section { display: grid; gap: 14px; }
@@ -308,7 +335,8 @@ const rulesHTML = `<!doctype html>
     box-shadow: var(--shadow);
   }
   .card.primary { border-color: #365271; }
-  .card h2 { margin: 0; font-size: 16px; color: #edf5ff; }
+  .card h2 { margin: 0; font-size: 20px; color: #edf5ff; }
+  body[data-theme="light"] .card h2 { color: #163047; }
   .card-head {
     display: flex;
     justify-content: space-between;
@@ -319,7 +347,7 @@ const rulesHTML = `<!doctype html>
   .desc {
     margin: 6px 0 0;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.5;
   }
   .pill-badge {
@@ -328,7 +356,7 @@ const rulesHTML = `<!doctype html>
     gap: 6px;
     border-radius: 999px;
     padding: 4px 10px;
-    font-size: 11px;
+    font-size: 12px;
     color: #b7d8f7;
     background: #17283b;
     border: 1px solid #2d4461;
@@ -349,13 +377,14 @@ const rulesHTML = `<!doctype html>
   .limit-card label {
     display: block;
     margin-bottom: 8px;
-    font-size: 13px;
+    font-size: 15px;
     color: #d9e7f6;
   }
+  body[data-theme="light"] .limit-card label { color: #21425d; }
   .hint {
     margin-top: 10px;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.5;
   }
   .legend {
@@ -392,9 +421,9 @@ const rulesHTML = `<!doctype html>
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    min-height: 42px;
+    min-height: 52px;
     max-width: 100%;
-    padding: 8px 10px 8px 12px;
+    padding: 10px 14px;
     border-radius: 999px;
     border: 1px solid var(--pill-border);
     background: linear-gradient(180deg, rgba(18,32,47,.95), rgba(14,24,35,.94));
@@ -420,7 +449,7 @@ const rulesHTML = `<!doctype html>
   }
   .pill.editing {
     border-radius: 22px;
-    padding: 10px;
+    padding: 14px;
     min-width: min(100%, 360px);
     max-width: min(100%, 420px);
     align-items: stretch;
@@ -433,9 +462,9 @@ const rulesHTML = `<!doctype html>
     max-width: 100%;
   }
   .pill-name {
-    font-size: 13px;
+    font-size: 17px;
     font-weight: 600;
-    max-width: 240px;
+    max-width: 320px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -450,7 +479,7 @@ const rulesHTML = `<!doctype html>
   .tag {
     border-radius: 999px;
     padding: 3px 8px;
-    font-size: 11px;
+    font-size: 12px;
     border: 1px solid #31485f;
     background: rgba(10,18,27,.72);
     color: #cae1f7;
@@ -461,46 +490,14 @@ const rulesHTML = `<!doctype html>
   .tag.added { border-color: #2f6749; color: #abf1c5; }
   .tag.removed { border-color: #8b4850; color: #ffb1b8; }
   .tag.error { border-color: #91454c; color: #ffb1b8; }
-  .pill-actions {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .icon-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 999px;
-    border: 1px solid #4a6078;
-    background: rgba(18,31,46,.88);
-    color: #ddecff;
-    cursor: pointer;
-    font-size: 15px;
-    line-height: 1;
-  }
-  .icon-btn:hover { border-color: #6b88a9; }
-  .icon-btn.remove {
-    border-color: #704048;
-    background: rgba(46,27,31,.88);
-    color: #ffc0c6;
-  }
-  .icon-btn.undo {
-    border-color: #3a6a50;
-    background: rgba(18,46,33,.86);
-    color: #aff3c8;
-  }
-  .icon-btn.add {
-    border-color: #2f6749;
-    background: rgba(18,46,33,.88);
-    color: #9bf0c1;
-  }
   .pill-edit {
     display: grid;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
   }
   .edit-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 120px;
+    grid-template-columns: minmax(0, 1fr) 138px;
     gap: 8px;
   }
   .input {
@@ -509,8 +506,8 @@ const rulesHTML = `<!doctype html>
     border: 1px solid var(--line);
     background: rgba(11, 18, 28, .86);
     color: var(--text);
-    padding: 9px 11px;
-    font-size: 13px;
+    padding: 11px 13px;
+    font-size: 16px;
     outline: none;
   }
   .input:focus {
@@ -532,7 +529,7 @@ const rulesHTML = `<!doctype html>
   .edit-actions {
     display: flex;
     justify-content: space-between;
-    gap: 8px;
+    gap: 10px;
     align-items: center;
   }
   .edit-tools {
@@ -545,8 +542,8 @@ const rulesHTML = `<!doctype html>
     background: rgba(18,31,46,.92);
     color: #dbeaff;
     border-radius: 999px;
-    padding: 6px 10px;
-    font-size: 11px;
+    padding: 8px 12px;
+    font-size: 13px;
     cursor: pointer;
   }
   .tiny-btn.warn { border-color: #77533b; color: #ffd7a3; }
@@ -555,20 +552,40 @@ const rulesHTML = `<!doctype html>
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    min-height: 42px;
-    padding: 8px 12px;
+    min-height: 52px;
+    padding: 10px 16px;
     border-radius: 999px;
     border: 1px dashed #3d5f80;
     background: rgba(18,32,47,.48);
     color: #b6d3ef;
     cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
   }
   .pill-add:hover { border-color: #5d88b5; }
+  body[data-theme="light"] .pill-add {
+    background: rgba(255,255,255,.82);
+    color: #2c4a66;
+    border-color: #7ea2c3;
+  }
+  .pill-add .plus {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1px solid #2f6749;
+    background: rgba(18,46,33,.88);
+    color: #9bf0c1;
+    font-size: 20px;
+    line-height: 1;
+  }
   .validation {
     margin-top: 10px;
     min-height: 18px;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 13px;
   }
   .validation.error { color: #ffb1b8; }
   .validation.warn { color: var(--warn); }
@@ -606,6 +623,7 @@ const rulesHTML = `<!doctype html>
           <div class="sub" id="meta"></div>
         </div>
         <div class="hero-actions">
+          <button class="btn secondary" id="themeBtn">切换日间模式</button>
           <a class="btn linkish" href="/">返回日志</a>
           <button class="btn secondary" id="reloadBtn">重新加载当前生效内容</button>
           <button class="btn danger" id="restoreBtn">恢复默认并生效</button>
@@ -680,6 +698,7 @@ const rulesHTML = `<!doctype html>
 
 <script>
 const EPS = 0.0001;
+const THEME_KEY = 'remem-theme';
 const state = {
   nextId: 1,
   baseLimits: { command: 2, group: 6 },
@@ -690,6 +709,7 @@ const state = {
   effectiveLimits: { commands: {}, groups: {} },
   draft: { commands: [], groups: [] },
   editing: null,
+  theme: 'light',
 };
 
 function normalizeName(v) {
@@ -722,6 +742,27 @@ function updateStatus(kind, title, note) {
   banner.className = 'banner ' + kind;
   document.getElementById('statusTitle').textContent = title;
   document.getElementById('statusNote').textContent = note;
+}
+
+function applyTheme(theme) {
+  state.theme = theme === 'dark' ? 'dark' : 'light';
+  document.body.dataset.theme = state.theme;
+  const btn = document.getElementById('themeBtn');
+  if (btn) {
+    btn.textContent = state.theme === 'light' ? '切换夜间模式' : '切换日间模式';
+  }
+  try {
+    localStorage.setItem(THEME_KEY, state.theme);
+  } catch (_) {}
+}
+
+function initializeTheme() {
+  let theme = 'light';
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'dark' || saved === 'light') theme = saved;
+  } catch (_) {}
+  applyTheme(theme);
 }
 
 function activeItems(kind) {
@@ -879,6 +920,10 @@ function updateBanner() {
   }
 }
 
+function updateDirtyStatus() {
+  updateBanner();
+}
+
 function enterEdit(kind, id) {
   if (state.editing && state.editing.kind === kind && state.editing.id === id) return;
   const item = (state.draft[kind] || []).find((it) => it.id === id);
@@ -1024,7 +1069,7 @@ function renderCanvas(kind) {
       name.dataset.editName = item.id;
       name.addEventListener('input', () => {
         item.name = name.value;
-        renderAll();
+        updateDirtyStatus();
       });
       name.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -1046,7 +1091,7 @@ function renderCanvas(kind) {
       limit.value = item.limitValue || '';
       limit.addEventListener('input', () => {
         item.limitValue = limit.value;
-        renderAll();
+        updateDirtyStatus();
       });
       limit.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -1078,22 +1123,30 @@ function renderCanvas(kind) {
       reset.className = 'tiny-btn warn';
       reset.type = 'button';
       reset.textContent = '回退全局';
-      reset.addEventListener('click', () => {
+      reset.addEventListener('click', (e) => {
+        e.stopPropagation();
         item.limitValue = '';
-        renderAll();
+        limit.value = '';
+        updateDirtyStatus();
       });
 
       const cancel = document.createElement('button');
       cancel.className = 'tiny-btn';
       cancel.type = 'button';
       cancel.textContent = '取消';
-      cancel.addEventListener('click', cancelEdit);
+      cancel.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cancelEdit();
+      });
 
       const remove = document.createElement('button');
       remove.className = 'tiny-btn danger';
       remove.type = 'button';
       remove.textContent = item.sourceDefault ? '删除候选' : '删除';
-      remove.addEventListener('click', () => toggleRemove(kind, item.id));
+      remove.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleRemove(kind, item.id);
+      });
 
       tools.appendChild(reset);
       tools.appendChild(cancel);
@@ -1149,33 +1202,8 @@ function renderCanvas(kind) {
         meta.appendChild(globalTag);
       }
 
-      const actions = document.createElement('div');
-      actions.className = 'pill-actions';
-      const editBtn = document.createElement('button');
-      editBtn.className = 'icon-btn';
-      editBtn.type = 'button';
-      editBtn.textContent = '✎';
-      editBtn.title = '编辑';
-      editBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        enterEdit(kind, item.id);
-      });
-      actions.appendChild(editBtn);
-
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'icon-btn ' + (item.removed ? 'undo' : 'remove');
-      removeBtn.type = 'button';
-      removeBtn.textContent = item.removed ? '↺' : '×';
-      removeBtn.title = item.removed ? '恢复' : (item.sourceDefault ? '标记删除' : '删除');
-      removeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleRemove(kind, item.id);
-      });
-      actions.appendChild(removeBtn);
-
       pill.appendChild(view);
       pill.appendChild(meta);
-      pill.appendChild(actions);
     }
 
     canvas.appendChild(pill);
@@ -1184,8 +1212,11 @@ function renderCanvas(kind) {
   const add = document.createElement('button');
   add.className = 'pill-add';
   add.type = 'button';
-  add.innerHTML = '<span class="icon-btn add">+</span><span>新增' + (kind === 'commands' ? '命令规则' : '程序组规则') + '</span>';
-  add.addEventListener('click', () => addPill(kind));
+  add.innerHTML = '<span class="plus">+</span><span>新增' + (kind === 'commands' ? '命令规则' : '程序组规则') + '</span>';
+  add.addEventListener('click', (e) => {
+    e.stopPropagation();
+    addPill(kind);
+  });
   canvas.appendChild(add);
 
   if (!issues.length) {
@@ -1247,17 +1278,23 @@ document.getElementById('restoreBtn').addEventListener('click', async () => {
   await savePatch(patch, '已恢复默认并生效', '所有规则已回到默认集合并立即生效。');
 });
 
+document.getElementById('themeBtn').addEventListener('click', () => {
+  applyTheme(state.theme === 'light' ? 'dark' : 'light');
+});
+
 document.getElementById('globalCommandLimit').addEventListener('input', renderAll);
 document.getElementById('globalGroupLimit').addEventListener('input', renderAll);
 
 document.addEventListener('mousedown', (e) => {
   if (!state.editing) return;
+  if (e.target.closest('.pill-add')) return;
   const active = document.querySelector('.pill.editing');
   if (active && !active.contains(e.target)) {
     commitEdit();
   }
 });
 
+initializeTheme();
 loadRules('所有更改已保存').catch((e) => {
   updateStatus('error', '加载失败', String(e));
 });
@@ -1265,4 +1302,3 @@ loadRules('所有更改已保存').catch((e) => {
 </script>
 +</body>
 +</html>`
-
