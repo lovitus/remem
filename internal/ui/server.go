@@ -447,17 +447,17 @@ const rulesHTML = `<!doctype html>
     margin-top: 12px;
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     align-items: flex-start;
   }
   .pill {
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    min-height: 46px;
+    gap: 6px;
+    min-height: 40px;
     max-width: 100%;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-radius: 999px;
     border: 1px solid var(--pill-border);
     background: var(--pill);
@@ -492,7 +492,7 @@ const rulesHTML = `<!doctype html>
   body[data-theme="dark"] .pill.invalid-item { border-color: #c5575d; background: linear-gradient(180deg, rgba(73,30,36,.92), rgba(39,18,22,.90)); }
   .pill.editing {
     border-radius: 18px;
-    padding: 14px;
+    padding: 12px;
     min-width: min(100%, 360px);
     max-width: min(100%, 420px);
     align-items: stretch;
@@ -500,14 +500,14 @@ const rulesHTML = `<!doctype html>
   .pill-view {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     min-width: 0;
     max-width: 100%;
   }
   .pill-name {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
-    max-width: 320px;
+    max-width: 220px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -516,13 +516,13 @@ const rulesHTML = `<!doctype html>
   .pill-meta {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     flex-wrap: wrap;
   }
   .tag {
     border-radius: 999px;
-    padding: 2px 8px;
-    font-size: 11px;
+    padding: 1px 7px;
+    font-size: 10px;
     border: 1px solid var(--line);
     background: #f4f8fc;
     color: var(--muted);
@@ -545,7 +545,7 @@ const rulesHTML = `<!doctype html>
   body[data-theme="dark"] .tag.error { border-color: #91454c; color: #ffb1b8; background: rgba(10,18,27,.72); }
   .pill-edit {
     display: grid;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
   }
   .edit-grid {
@@ -583,7 +583,7 @@ const rulesHTML = `<!doctype html>
   .edit-actions {
     display: flex;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
   }
   .edit-tools {
@@ -612,15 +612,15 @@ const rulesHTML = `<!doctype html>
   .pill-add {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    min-height: 52px;
-    padding: 10px 16px;
+    gap: 7px;
+    min-height: 40px;
+    padding: 6px 12px;
     border-radius: 999px;
     border: 1px dashed #3d5f80;
     background: #fff;
     color: #2c4a66;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
   }
   .pill-add:hover { border-color: #5d88b5; background: #f7fbff; }
@@ -639,7 +639,7 @@ const rulesHTML = `<!doctype html>
     border: 1px solid #2f6749;
     background: rgba(18,46,33,.88);
     color: #9bf0c1;
-    font-size: 20px;
+    font-size: 18px;
     line-height: 1;
   }
   .validation {
@@ -1064,6 +1064,7 @@ function toggleRemove(kind, id) {
 }
 
 function addPill(kind) {
+  if (state.editing) commitEdit();
   const item = {
     id: nextPillId(kind),
     baselineName: '',
@@ -1274,8 +1275,9 @@ function renderCanvas(kind) {
   add.className = 'pill-add';
   add.type = 'button';
   add.innerHTML = '<span class="plus">+</span><span>新增' + (kind === 'commands' ? '命令规则' : '程序组规则') + '</span>';
-  add.addEventListener('click', (e) => {
+  add.addEventListener('mousedown', (e) => {
     e.stopPropagation();
+    e.preventDefault();
     addPill(kind);
   });
   canvas.appendChild(add);
