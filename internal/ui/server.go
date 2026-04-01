@@ -363,6 +363,12 @@ const rulesHTML = `<!doctype html>
     align-items: center;
     margin-bottom: 8px;
   }
+  .card-side {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
   .desc {
     margin: 6px 0 0;
     color: var(--muted);
@@ -454,7 +460,7 @@ const rulesHTML = `<!doctype html>
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     min-height: 40px;
     max-width: 100%;
     padding: 6px 10px;
@@ -500,7 +506,7 @@ const rulesHTML = `<!doctype html>
   .pill-view {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     min-width: 0;
     max-width: 100%;
   }
@@ -516,7 +522,7 @@ const rulesHTML = `<!doctype html>
   .pill-meta {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     flex-wrap: wrap;
   }
   .tag {
@@ -622,6 +628,33 @@ const rulesHTML = `<!doctype html>
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
+  }
+  .canvas-add {
+    display: none;
+  }
+  .add-inline-btn {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--text);
+    border-radius: 999px;
+    min-height: 38px;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .add-inline-btn .plus {
+    width: 22px;
+    height: 22px;
+    font-size: 15px;
+  }
+  body[data-theme="dark"] .add-inline-btn {
+    background: rgba(18,31,46,.9);
+    color: #fff;
+    border-color: #35506f;
   }
   .pill-add:hover { border-color: #5d88b5; background: #f7fbff; }
   body[data-theme="dark"] .pill-add {
@@ -737,7 +770,10 @@ const rulesHTML = `<!doctype html>
           <h2>命令规则</h2>
           <p class="desc">默认规则和当前生效规则合并显示。双击胶囊即可原地修改。</p>
         </div>
-        <span class="pill-badge" id="commandCount">0 项</span>
+        <div class="card-side">
+          <span class="pill-badge" id="commandCount">0 项</span>
+          <button class="add-inline-btn" id="cmdAddBtn" type="button"><span class="plus">+</span><span>新增命令规则</span></button>
+        </div>
       </div>
       <div class="canvas" id="cmdCanvas"></div>
       <div class="validation" id="cmdValidation"></div>
@@ -749,7 +785,10 @@ const rulesHTML = `<!doctype html>
           <h2>程序组规则</h2>
           <p class="desc">浏览器、IDE 和工具进程组统一在这里查看和编辑。</p>
         </div>
-        <span class="pill-badge" id="groupCount">0 项</span>
+        <div class="card-side">
+          <span class="pill-badge" id="groupCount">0 项</span>
+          <button class="add-inline-btn" id="grpAddBtn" type="button"><span class="plus">+</span><span>新增程序组规则</span></button>
+        </div>
       </div>
       <div class="canvas" id="grpCanvas"></div>
       <div class="validation" id="grpValidation"></div>
@@ -1074,7 +1113,7 @@ function addPill(kind) {
     custom: false,
     limitValue: '',
   };
-  state.draft[kind].push(item);
+  state.draft[kind].unshift(item);
   enterEdit(kind, item.id);
 }
 
@@ -1173,10 +1212,12 @@ function renderCanvas(kind) {
       actions.className = 'edit-actions';
       const tags = document.createElement('div');
       tags.className = 'pill-meta';
-      const sourceTag = document.createElement('span');
-      sourceTag.className = 'tag ' + (item.sourceDefault ? 'default' : 'added');
-      sourceTag.textContent = item.sourceDefault ? '默认' : '新增';
-      tags.appendChild(sourceTag);
+      if (item.sourceDefault) {
+        const sourceTag = document.createElement('span');
+        sourceTag.className = 'tag default';
+        sourceTag.textContent = '默认';
+        tags.appendChild(sourceTag);
+      }
 
       const tools = document.createElement('div');
       tools.className = 'edit-tools';
@@ -1271,17 +1312,6 @@ function renderCanvas(kind) {
     canvas.appendChild(pill);
   });
 
-  const add = document.createElement('button');
-  add.className = 'pill-add';
-  add.type = 'button';
-  add.innerHTML = '<span class="plus">+</span><span>新增' + (kind === 'commands' ? '命令规则' : '程序组规则') + '</span>';
-  add.addEventListener('mousedown', (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    addPill(kind);
-  });
-  canvas.appendChild(add);
-
   if (!issues.length) {
     validationEl.className = 'validation';
     validationEl.textContent = '双击胶囊直接修改，删除默认规则会先变成“删除候选”，保存后才真正生效。';
@@ -1343,6 +1373,16 @@ document.getElementById('restoreBtn').addEventListener('click', async () => {
 
 document.getElementById('themeBtn').addEventListener('click', () => {
   applyTheme(state.theme === 'light' ? 'dark' : 'light');
+});
+document.getElementById('cmdAddBtn').addEventListener('mousedown', (e) => {
+  e.stopPropagation();
+  e.preventDefault();
+  addPill('commands');
+});
+document.getElementById('grpAddBtn').addEventListener('mousedown', (e) => {
+  e.stopPropagation();
+  e.preventDefault();
+  addPill('groups');
 });
 
 document.getElementById('globalCommandLimit').addEventListener('input', renderAll);
