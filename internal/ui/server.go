@@ -172,250 +172,536 @@ const rulesHTML = `<!doctype html>
 <style>
   :root {
     --bg: #0b1017;
+    --bg2: #101827;
     --panel: #141d29;
-    --panel2: #0f1722;
-    --line: #2b3a4f;
-    --text: #ebf2fc;
-    --muted: #9bb0ca;
-    --ok: #36c66b;
-    --btn: #1f8e5e;
-    --btn2: #5d6e82;
-    --danger: #ce4f4f;
-    --focus: #58a0ff;
+    --panel-soft: #182335;
+    --panel-deep: #0f1723;
+    --line: #2c3d53;
+    --line-soft: #243245;
+    --text: #eaf1fb;
+    --muted: #9cb1cb;
+    --muted-soft: #7e93ad;
+    --ok: #3ccc77;
+    --warn: #ffcd62;
+    --danger: #d75b63;
+    --info: #71c1ff;
+    --save: #24875f;
+    --secondary: #42556d;
+    --focus: #63a6ff;
+    --shadow: 0 14px 36px rgba(0,0,0,.28);
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    background: radial-gradient(circle at top right, #1a2a44 0%, #0b1017 46%);
     color: var(--text);
+    background:
+      radial-gradient(circle at top right, rgba(40,74,124,.42), transparent 30%),
+      radial-gradient(circle at top left, rgba(27,72,55,.25), transparent 26%),
+      linear-gradient(180deg, var(--bg2), var(--bg));
     font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   }
-  .page { max-width: 1160px; margin: 18px auto; padding: 0 16px 24px; }
-  .topbar {
+  a { color: #9cd9ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .page {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 18px 16px 40px;
+  }
+  .hero {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    margin: -18px -16px 18px;
+    padding: 18px 16px 14px;
+    background: linear-gradient(180deg, rgba(11,16,23,.96), rgba(11,16,23,.90));
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(60, 82, 110, .55);
+    box-shadow: 0 10px 24px rgba(0,0,0,.12);
+  }
+  .hero-inner {
+    max-width: 1240px;
+    margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr auto;
     gap: 12px;
+  }
+  .hero-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
     align-items: start;
   }
-  .head-left { min-width: 0; }
-  h1 { margin: 0 0 8px; font-size: 24px; letter-spacing: .2px; }
-  .sub { color: var(--muted); font-size: 13px; }
-  .tips {
-    margin-top: 10px;
-    border: 1px solid #33506f;
-    border-radius: 10px;
-    background: #122033;
-    color: #c7d8ec;
-    padding: 10px 12px;
-    line-height: 1.6;
+  .hero-title {
+    min-width: 0;
   }
-
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 10px;
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    letter-spacing: .2px;
   }
-  .card h3 { margin: 0 0 8px; font-size: 14px; color: #ddecff; letter-spacing: .2px; }
-  .desc { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
-  .list {
-    background: var(--panel2);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    min-height: 110px;
-    max-height: 220px;
-    overflow: auto;
-    padding: 8px;
-    white-space: pre-wrap;
-    font-family: ui-monospace, Menlo, Consolas, monospace;
-    font-size: 12px;
-  }
-
-  .limits { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .limit-row {
-    display: grid;
-    grid-template-columns: 1fr 130px;
-    gap: 8px;
-    align-items: center;
-    background: var(--panel2);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 8px;
-  }
-
-  .token-box {
-    background: var(--panel2);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    min-height: 220px;
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-  }
-  .token-row {
-    display: grid;
-    grid-template-columns: 1fr 110px 34px;
-    gap: 8px;
-    align-items: center;
-  }
-  .token-row.add {
-    border-top: 1px dashed #3b4d66;
-    padding-top: 9px;
-    margin-top: 2px;
-  }
-
-  .input {
-    width: 100%;
-    border-radius: 8px;
-    border: 1px solid var(--line);
-    background: var(--panel2);
-    color: var(--text);
-    padding: 8px 10px;
+  .sub {
+    margin-top: 6px;
+    color: var(--muted);
     font-size: 13px;
-    outline: none;
+    word-break: break-all;
   }
-  .input:focus { border-color: var(--focus); box-shadow: 0 0 0 2px rgba(88, 160, 255, .2); }
-  .num {
-    text-align: right;
-    font-family: ui-monospace, Menlo, Consolas, monospace;
-  }
-
-  .xbtn, .plus {
-    border-radius: 8px;
-    border: 1px solid #5a3036;
-    background: #2c1a20;
-    color: #ffb1b9;
-    height: 32px;
-    cursor: pointer;
-    font-size: 18px;
-    line-height: 1;
-  }
-  .plus {
-    border-color: #255b41;
-    background: #173324;
-    color: #98f0bf;
-  }
-  .xbtn:disabled { opacity: .35; cursor: not-allowed; }
-
-  .ops {
+  .hero-actions {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
     justify-content: flex-end;
-    position: fixed;
-    top: 12px;
-    right: max(16px, calc((100vw - 1160px) / 2 + 16px));
-    z-index: 60;
-    background: linear-gradient(180deg, rgba(16,23,34,.95), rgba(16,23,34,.78));
-    border: 1px solid #2d4160;
-    border-radius: 10px;
-    padding: 8px;
-    max-width: 460px;
-    box-shadow: 0 8px 22px rgba(0, 0, 0, .35);
   }
   .btn {
-    border: 0;
-    border-radius: 9px;
+    border: 1px solid transparent;
+    border-radius: 10px;
     color: #fff;
-    padding: 9px 13px;
+    padding: 10px 14px;
     cursor: pointer;
     font-size: 13px;
+    font-weight: 600;
+    min-height: 40px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
   }
-  .save { background: var(--btn); }
-  .reload { background: var(--btn2); }
-  .restore { background: var(--danger); }
-  .state { margin-top: 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }
-  .oktext { color: var(--ok); }
-  .warn { color: #ffca66; }
-  a { color: #8fd3ff; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn.save { background: var(--save); }
+  .btn.secondary { background: var(--secondary); }
+  .btn.linkish { background: #203044; border-color: #35506f; }
+  .btn.danger { background: #60252b; border-color: #8f3942; }
+  .banner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(20,29,41,.98), rgba(17,24,35,.95));
+    border-radius: 12px;
+    padding: 11px 14px;
+    box-shadow: var(--shadow);
+  }
+  .banner strong { font-size: 13px; }
+  .banner-note {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .banner.saved strong { color: var(--ok); }
+  .banner.dirty strong { color: var(--warn); }
+  .banner.error strong { color: #ff9aa3; }
+  .banner.info strong { color: var(--info); }
+  .banner a {
+    white-space: nowrap;
+    color: #b7e2ff;
+    font-size: 13px;
+  }
 
-  @media (max-width: 900px) {
-    .topbar { grid-template-columns: 1fr; }
-    .ops {
+  .intro {
+    margin-bottom: 14px;
+    border: 1px solid #31506f;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #122237, #112031);
+    color: #c6d8ee;
+    padding: 12px 14px;
+    line-height: 1.6;
+  }
+  .intro b { color: #eff6ff; }
+
+  .section {
+    margin-top: 14px;
+    display: grid;
+    gap: 12px;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .card {
+    background: linear-gradient(180deg, rgba(20,29,41,.98), rgba(16,23,35,.96));
+    border: 1px solid var(--line-soft);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: var(--shadow);
+  }
+  .card.primary {
+    border-color: #35506f;
+    background: linear-gradient(180deg, rgba(20,31,48,.98), rgba(16,24,36,.98));
+  }
+  .card.secondary {
+    border-color: #26374a;
+    background: linear-gradient(180deg, rgba(18,26,38,.98), rgba(14,21,31,.98));
+  }
+  .card h2, .card h3 {
+    margin: 0;
+    font-size: 15px;
+    letter-spacing: .2px;
+    color: #eef5ff;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .desc {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .pill {
+    border-radius: 999px;
+    padding: 4px 9px;
+    background: #17283b;
+    border: 1px solid #2d4461;
+    color: #b7d8f7;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .summary-list {
+    margin-top: 10px;
+    display: grid;
+    gap: 8px;
+  }
+  .summary-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 8px 10px;
+    background: var(--panel-deep);
+    border: 1px solid var(--line-soft);
+    border-radius: 10px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px;
+  }
+  .summary-empty {
+    color: var(--muted-soft);
+    padding: 16px 10px;
+    text-align: center;
+    border: 1px dashed #30445e;
+    border-radius: 10px;
+    background: rgba(15,23,35,.45);
+    font-size: 12px;
+  }
+
+  .limits-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .limit-card {
+    padding: 10px 12px;
+    background: var(--panel-deep);
+    border: 1px solid var(--line-soft);
+    border-radius: 12px;
+  }
+  .limit-card label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #d9e7f6;
+  }
+  .hint {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .editor-table {
+    margin-top: 10px;
+    border: 1px solid var(--line-soft);
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(13,19,29,.75);
+  }
+  .editor-head, .editor-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 132px 44px 28px;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 10px;
+  }
+  .editor-head {
+    background: rgba(23,35,52,.96);
+    border-bottom: 1px solid var(--line-soft);
+    color: #b9cce3;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .editor-body {
+    display: grid;
+    gap: 0;
+  }
+  .editor-row {
+    border-top: 1px solid rgba(38,55,74,.75);
+  }
+  .editor-row:first-child { border-top: 0; }
+  .editor-row.add {
+    background: rgba(18,31,28,.34);
+  }
+  .editor-row.invalid {
+    background: rgba(90,31,38,.24);
+  }
+  .editor-row.duplicate {
+    background: rgba(97,68,26,.22);
+  }
+  .input {
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--panel-deep);
+    color: var(--text);
+    padding: 9px 10px;
+    font-size: 13px;
+    outline: none;
+  }
+  .input:focus {
+    border-color: var(--focus);
+    box-shadow: 0 0 0 2px rgba(99, 166, 255, .18);
+  }
+  .input.invalid {
+    border-color: #c5575d;
+    box-shadow: 0 0 0 2px rgba(197,87,93,.12);
+  }
+  .input.duplicate {
+    border-color: #c89b3b;
+    box-shadow: 0 0 0 2px rgba(200,155,59,.12);
+  }
+  .num {
+    text-align: right;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  .row-state {
+    text-align: center;
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .row-state.ok { color: var(--ok); }
+  .row-state.warn { color: var(--warn); }
+  .row-state.bad { color: #ff9aa3; }
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    border: 1px solid #4f637c;
+    background: #182536;
+    color: #dcecff;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+  }
+  .icon-btn.add {
+    border-color: #29664a;
+    background: #153225;
+    color: #9bf0c1;
+  }
+  .icon-btn.remove {
+    border-color: #6e3941;
+    background: #321d22;
+    color: #ffb4bc;
+  }
+  .icon-btn:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+  }
+  .validation {
+    margin-top: 10px;
+    min-height: 18px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .validation.error { color: #ff9aa3; }
+  .validation.warn { color: var(--warn); }
+
+  .default-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+    margin-top: 10px;
+  }
+  .default-col {
+    min-width: 0;
+  }
+  .default-list {
+    margin-top: 8px;
+    display: grid;
+    gap: 6px;
+  }
+  .default-item {
+    padding: 7px 9px;
+    border-radius: 10px;
+    border: 1px solid #243448;
+    background: rgba(15,23,35,.72);
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: #c7d6e8;
+  }
+
+  @media (max-width: 980px) {
+    .hero {
       position: static;
-      justify-content: flex-start;
-      max-width: none;
+      margin: 0 0 18px;
+      padding: 0;
+      background: none;
+      backdrop-filter: none;
+      border-bottom: 0;
+      box-shadow: none;
     }
-    .grid-2 { grid-template-columns: 1fr; }
-    .limits { grid-template-columns: 1fr; }
-    .token-row { grid-template-columns: 1fr 92px 32px; }
+    .hero-top {
+      grid-template-columns: 1fr;
+    }
+    .hero-actions {
+      justify-content: flex-start;
+    }
+    .banner {
+      grid-template-columns: 1fr;
+    }
+    .grid-2, .limits-grid, .default-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .editor-head, .editor-row {
+      grid-template-columns: minmax(0, 1fr) 110px 36px;
+    }
+    .editor-head .state-col,
+    .editor-row .row-state {
+      display: none;
+    }
   }
 </style>
 </head>
 <body>
 <div class="page">
-  <div class="topbar">
-    <div class="head-left">
-      <h1>Rules Editor</h1>
-      <div class="sub" id="meta"></div>
-    </div>
-    <div class="ops">
-      <button class="btn save" id="saveBtn">保存并立即生效</button>
-      <button class="btn reload" id="reloadBtn">重新加载当前生效内容</button>
-      <button class="btn restore" id="restoreBtn">恢复默认并生效</button>
-    </div>
-  </div>
-
-  <div class="tips">
-    支持两层内存限制：<b>全局上限</b> + <b>单项自定义上限</b>。<br/>
-    命令规则和程序组规则都在一个大框内编辑：每项后面 <b>x</b> 删除；末尾空项后面 <b>+</b> 添加。<br/>
-    保存后立刻热加载生效。
-  </div>
-
-  <div class="grid-2">
-    <div class="card">
-      <h3>当前生效: 命令规则（含限制）</h3>
-      <div class="list" id="effectiveCommands"></div>
-    </div>
-    <div class="card">
-      <h3>当前生效: 程序组规则（含限制）</h3>
-      <div class="list" id="effectiveGroups"></div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:12px">
-    <h3>全局上限（GiB）</h3>
-    <div class="limits">
-      <div class="limit-row">
-        <div>命令规则全局上限</div>
-        <input class="input num" id="globalCommandLimit" type="number" min="0.1" step="0.1" />
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-top">
+        <div class="hero-title">
+          <h1>Rules Editor</h1>
+          <div class="sub" id="meta"></div>
+        </div>
+        <div class="hero-actions">
+          <a class="btn linkish" href="/">返回日志</a>
+          <button class="btn secondary" id="reloadBtn">重新加载当前生效内容</button>
+          <button class="btn danger" id="restoreBtn">恢复默认并生效</button>
+          <button class="btn save" id="saveBtn">保存并立即生效</button>
+        </div>
       </div>
-      <div class="limit-row">
-        <div>程序组规则全局上限</div>
-        <input class="input num" id="globalGroupLimit" type="number" min="0.1" step="0.1" />
+      <div class="banner info" id="statusBanner">
+        <div>
+          <strong id="statusTitle">加载中</strong>
+          <div class="banner-note" id="statusNote">正在读取当前规则状态。</div>
+        </div>
+        <a href="/" id="statusLink">返回日志查看运行情况</a>
       </div>
     </div>
-    <div class="desc" id="baseLimitsHint" style="margin-top:8px;"></div>
   </div>
 
-  <div class="grid-2">
-    <div class="card">
-      <h3>命令规则编辑（名称 + 单项上限）</h3>
-      <p class="desc">示例: sed / vim / grep。单项上限留空时使用全局上限。</p>
-      <div class="token-box" id="cmdBox"></div>
-    </div>
-    <div class="card">
-      <h3>程序组规则编辑（名称 + 单项上限）</h3>
-      <p class="desc">示例: codex / chrome / firefox。单项上限留空时使用全局上限。</p>
-      <div class="token-box" id="grpBox"></div>
-    </div>
+  <div class="intro">
+    支持 <b>全局上限</b> 和 <b>单项自定义上限</b>。当前生效内容在上方对照，编辑区在中间直接修改，保存后立刻热加载生效。
   </div>
 
-  <div class="grid-2">
-    <div class="card">
-      <h3>默认命令规则</h3>
-      <div class="list" id="defaultCommands"></div>
+  <div class="section">
+    <div class="grid-2">
+      <div class="card secondary">
+        <div class="card-head">
+          <h2>当前生效命令规则</h2>
+          <span class="pill" id="effectiveCommandCount">0 项</span>
+        </div>
+        <div class="summary-list" id="effectiveCommands"></div>
+      </div>
+      <div class="card secondary">
+        <div class="card-head">
+          <h2>当前生效程序组规则</h2>
+          <span class="pill" id="effectiveGroupCount">0 项</span>
+        </div>
+        <div class="summary-list" id="effectiveGroups"></div>
+      </div>
     </div>
-    <div class="card">
-      <h3>默认程序组规则</h3>
-      <div class="list" id="defaultGroups"></div>
+
+    <div class="card secondary">
+      <div class="card-head">
+        <h2>全局上限</h2>
+        <span class="pill">保存后立即写入当前生效配置</span>
+      </div>
+      <div class="limits-grid">
+        <div class="limit-card">
+          <label for="globalCommandLimit">命令规则全局上限（GiB）</label>
+          <input class="input num" id="globalCommandLimit" type="number" min="0.1" step="0.1" />
+        </div>
+        <div class="limit-card">
+          <label for="globalGroupLimit">程序组规则全局上限（GiB）</label>
+          <input class="input num" id="globalGroupLimit" type="number" min="0.1" step="0.1" />
+        </div>
+      </div>
+      <div class="hint" id="baseLimitsHint"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card primary">
+        <div class="card-head">
+          <div>
+            <h2>命令规则编辑</h2>
+            <p class="desc">每行一条规则。名称为空不保存；单项上限留空时使用全局上限。</p>
+          </div>
+          <span class="pill" id="draftCommandCount">0 行</span>
+        </div>
+        <div class="editor-table">
+          <div class="editor-head">
+            <div>名称</div>
+            <div>单项上限</div>
+            <div class="state-col">状态</div>
+            <div></div>
+          </div>
+          <div class="editor-body" id="cmdBox"></div>
+        </div>
+        <div class="validation" id="cmdValidation"></div>
+      </div>
+      <div class="card primary">
+        <div class="card-head">
+          <div>
+            <h2>程序组规则编辑</h2>
+            <p class="desc">适合浏览器、IDE、工具进程组。输入内容后即视为有效候选。</p>
+          </div>
+          <span class="pill" id="draftGroupCount">0 行</span>
+        </div>
+        <div class="editor-table">
+          <div class="editor-head">
+            <div>名称</div>
+            <div>单项上限</div>
+            <div class="state-col">状态</div>
+            <div></div>
+          </div>
+          <div class="editor-body" id="grpBox"></div>
+        </div>
+        <div class="validation" id="grpValidation"></div>
+      </div>
+    </div>
+
+    <div class="card secondary">
+      <div class="card-head">
+        <div>
+          <h2>默认规则</h2>
+          <p class="desc">默认规则始终可见，方便对照当前生效内容，但不占用主编辑区。</p>
+        </div>
+        <span class="pill">只读参考</span>
+      </div>
+      <div class="default-grid">
+        <div class="default-col">
+          <h3>默认命令规则</h3>
+          <div class="default-list" id="defaultCommands"></div>
+        </div>
+        <div class="default-col">
+          <h3>默认程序组规则</h3>
+          <div class="default-list" id="defaultGroups"></div>
+        </div>
+      </div>
     </div>
   </div>
-
-  <div class="state" id="status"></div>
-  <div class="state"><a href="/">Back to logs</a></div>
 </div>
 
 <script>
@@ -428,6 +714,9 @@ const state = {
   effective: { commands: [], groups: [] },
   effectiveLimits: { commands: {}, groups: {} },
   draft: { commands: [], groups: [] },
+  status: { kind: 'info', title: '加载中', note: '正在读取当前规则状态。' },
+  dirty: false,
+  restoring: false,
 };
 
 function normalizeName(v) {
@@ -454,8 +743,7 @@ function normalizeNameList(arr) {
   const seen = new Set();
   for (const item of arr || []) {
     const v = normalizeName(item);
-    if (!v) continue;
-    if (seen.has(v)) continue;
+    if (!v || seen.has(v)) continue;
     seen.add(v);
     out.push(v);
   }
@@ -465,145 +753,276 @@ function normalizeNameList(arr) {
 function normalizeItems(items, globalLimit) {
   const out = [];
   const seen = new Set();
-  for (const it of items || []) {
-    const name = normalizeName((it || {}).name || '');
+  for (const raw of items || []) {
+    const name = normalizeName((raw || {}).name || '');
     if (!name || seen.has(name)) continue;
     seen.add(name);
-    const isCustom = !!(it && it.custom);
-    const parsed = parsePositive((it || {}).limit);
-    const limit = isCustom ? (parsed || globalLimit) : globalLimit;
-    out.push({ name, limit: roundGiB(limit), custom: isCustom });
+    const custom = !!(raw && raw.custom);
+    const parsed = parsePositive((raw || {}).limit);
+    const limit = custom ? (parsed || globalLimit) : globalLimit;
+    out.push({ name, limit: roundGiB(limit), custom });
   }
   return out;
 }
 
 function itemsFromNames(names, overrideMap, globalLimit) {
-  const out = [];
-  for (const n of normalizeNameList(names || [])) {
-    const ov = parsePositive((overrideMap || {})[n]);
-    out.push({ name: n, limit: ov > 0 ? ov : globalLimit, custom: ov > 0 });
-  }
-  return out;
+  return normalizeNameList(names || []).map((name) => {
+    const ov = parsePositive((overrideMap || {})[name]);
+    return { name, limit: ov > 0 ? ov : globalLimit, custom: ov > 0 };
+  });
 }
 
-function byNameMap(items) {
-  const m = {};
-  for (const it of items || []) {
-    m[it.name] = it.limit;
+function summarizeLines(containerId, countId, items, limitMap, fallbackLimit) {
+  const host = document.getElementById(containerId);
+  document.getElementById(countId).textContent = (items.length || 0) + ' 项';
+  host.innerHTML = '';
+  if (!items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'summary-empty';
+    empty.textContent = '当前没有规则。';
+    host.appendChild(empty);
+    return;
   }
-  return m;
+  for (const name of items) {
+    const row = document.createElement('div');
+    row.className = 'summary-item';
+    row.innerHTML = '<div>' + name + '</div><div>' + fmtGiB((limitMap || {})[name] || fallbackLimit) + 'GiB</div>';
+    host.appendChild(row);
+  }
 }
 
-function renderBox(kind) {
+function renderDefaults(containerId, items) {
+  const host = document.getElementById(containerId);
+  host.innerHTML = '';
+  if (!items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'summary-empty';
+    empty.textContent = '无默认项';
+    host.appendChild(empty);
+    return;
+  }
+  for (const name of items) {
+    const row = document.createElement('div');
+    row.className = 'default-item';
+    row.textContent = name;
+    host.appendChild(row);
+  }
+}
+
+function getValidation(kind) {
+  const items = state.draft[kind] || [];
+  const issues = [];
+  const seen = new Map();
+  items.forEach((raw, idx) => {
+    const name = normalizeName(raw.name);
+    const limitRaw = (raw.limitValue || '').trim();
+    if (!name) return;
+    if (!seen.has(name)) {
+      seen.set(name, []);
+    }
+    seen.get(name).push(idx);
+    if (limitRaw !== '' && parsePositive(limitRaw) <= 0) {
+      issues.push({ idx, type: 'invalid-limit', message: name + ' 的单项上限必须大于 0' });
+    }
+  });
+  for (const [name, indexes] of seen.entries()) {
+    if (indexes.length > 1) {
+      indexes.forEach((idx) => issues.push({ idx, type: 'duplicate', message: '重复规则: ' + name }));
+    }
+  }
+  return issues;
+}
+
+function hasValidationErrors() {
+  return getValidation('commands').length > 0 || getValidation('groups').length > 0;
+}
+
+function updateStatus(kind, title, note) {
+  state.status = { kind, title, note };
+  const banner = document.getElementById('statusBanner');
+  banner.className = 'banner ' + kind;
+  document.getElementById('statusTitle').textContent = title;
+  document.getElementById('statusNote').textContent = note;
+}
+
+function updateDirtyState() {
+  if (hasValidationErrors()) {
+    updateStatus('error', '存在未提交更改', '请先修正重复名称或非法上限，然后再保存。');
+    state.dirty = true;
+    return;
+  }
+  const patch = computePatchFromDraft();
+  const same = JSON.stringify(patch) === JSON.stringify(computePatchFromEffective());
+  state.dirty = !same;
+  if (state.dirty) {
+    updateStatus('dirty', '存在未提交更改', '修改已留在页面内，点击“保存并立即生效”后才会写入当前规则。');
+  } else {
+    updateStatus('saved', '所有更改已保存', '当前页面内容与已生效规则一致。');
+  }
+}
+
+function makeDraftRow(raw) {
+  return {
+    name: normalizeName(raw.name || ''),
+    custom: !!raw.custom,
+    limitValue: raw.custom ? fmtGiB(raw.limit || 0) : '',
+  };
+}
+
+function renderEditor(kind) {
   const box = document.getElementById(kind === 'commands' ? 'cmdBox' : 'grpBox');
+  const validationEl = document.getElementById(kind === 'commands' ? 'cmdValidation' : 'grpValidation');
+  const countEl = document.getElementById(kind === 'commands' ? 'draftCommandCount' : 'draftGroupCount');
   const items = state.draft[kind];
   const globalLimit = kind === 'commands' ? state.globalLimits.command : state.globalLimits.group;
-  const namePlaceholder = kind === 'commands' ? '输入命令名' : '输入程序组名';
-  box.innerHTML = '';
+  const placeholder = kind === 'commands' ? '输入命令名' : '输入程序组名';
+  const issues = getValidation(kind);
+  const issueMap = new Map();
+  issues.forEach((it) => {
+    if (!issueMap.has(it.idx)) issueMap.set(it.idx, []);
+    issueMap.get(it.idx).push(it);
+  });
 
+  box.innerHTML = '';
+  countEl.textContent = items.filter((it) => normalizeName(it.name)).length + ' 行';
   items.forEach((it, idx) => {
+    const nameNorm = normalizeName(it.name);
     const row = document.createElement('div');
-    row.className = 'token-row';
+    const rowIssues = issueMap.get(idx) || [];
+    const hasDuplicate = rowIssues.some((x) => x.type === 'duplicate');
+    const hasInvalid = rowIssues.some((x) => x.type === 'invalid-limit');
+    row.className = 'editor-row' + (hasDuplicate ? ' duplicate' : '') + (hasInvalid ? ' invalid' : '');
 
     const name = document.createElement('input');
-    name.className = 'input';
+    name.className = 'input' + (hasDuplicate ? ' duplicate' : '');
     name.type = 'text';
-    name.value = it.name;
-    name.placeholder = namePlaceholder;
+    name.value = it.name || '';
+    name.placeholder = placeholder;
     name.addEventListener('input', () => {
       state.draft[kind][idx].name = name.value;
+      renderAll();
     });
 
     const limit = document.createElement('input');
-    limit.className = 'input num';
+    limit.className = 'input num' + (hasInvalid ? ' invalid' : '');
     limit.type = 'number';
     limit.min = '0.1';
     limit.step = '0.1';
-    limit.value = it.custom ? fmtGiB(it.limit || globalLimit) : '';
     limit.placeholder = fmtGiB(globalLimit);
-    limit.title = 'GiB';
+    limit.value = it.limitValue || '';
     limit.addEventListener('input', () => {
-      const n = parsePositive(limit.value);
-      state.draft[kind][idx].custom = n > 0;
-      state.draft[kind][idx].limit = n > 0 ? n : globalLimit;
+      state.draft[kind][idx].limitValue = limit.value;
+      renderAll();
     });
 
-    const x = document.createElement('button');
-    x.className = 'xbtn';
-    x.textContent = 'x';
-    x.title = '删除';
-    x.addEventListener('click', () => {
+    const stateCell = document.createElement('div');
+    stateCell.className = 'row-state';
+    if (!nameNorm) {
+      stateCell.textContent = '';
+    } else if (hasDuplicate) {
+      stateCell.classList.add('warn');
+      stateCell.textContent = '!';
+      stateCell.title = '名称重复';
+    } else if (hasInvalid) {
+      stateCell.classList.add('bad');
+      stateCell.textContent = '!';
+      stateCell.title = '上限无效';
+    } else {
+      stateCell.classList.add('ok');
+      stateCell.textContent = '✓';
+      stateCell.title = '有效';
+    }
+
+    const remove = document.createElement('button');
+    remove.className = 'icon-btn remove';
+    remove.type = 'button';
+    remove.textContent = '×';
+    remove.title = '删除';
+    remove.addEventListener('click', () => {
       state.draft[kind].splice(idx, 1);
-      renderEditors();
+      renderAll();
     });
 
     row.appendChild(name);
     row.appendChild(limit);
-    row.appendChild(x);
+    row.appendChild(stateCell);
+    row.appendChild(remove);
     box.appendChild(row);
   });
 
-  const add = document.createElement('div');
-  add.className = 'token-row add';
+  const addRow = document.createElement('div');
+  addRow.className = 'editor-row add';
 
   const addName = document.createElement('input');
   addName.className = 'input';
   addName.type = 'text';
-  addName.placeholder = namePlaceholder + '（新增）';
+  addName.placeholder = placeholder + '（新增）';
 
   const addLimit = document.createElement('input');
   addLimit.className = 'input num';
   addLimit.type = 'number';
   addLimit.min = '0.1';
   addLimit.step = '0.1';
-  addLimit.placeholder = 'GiB';
+  addLimit.placeholder = fmtGiB(globalLimit);
+
+  const addState = document.createElement('div');
+  addState.className = 'row-state ' + (normalizeName(addName.value) ? 'ok' : '');
+  addState.textContent = '';
 
   const addBtn = document.createElement('button');
-  addBtn.className = 'plus';
+  addBtn.className = 'icon-btn add';
+  addBtn.type = 'button';
   addBtn.textContent = '+';
   addBtn.title = '添加';
   addBtn.addEventListener('click', () => {
     const name = normalizeName(addName.value);
     if (!name) return;
-    const limitVal = parsePositive(addLimit.value);
-    const custom = limitVal > 0;
-    const limit = custom ? limitVal : globalLimit;
-    const existing = state.draft[kind].find((x) => normalizeName(x.name) === name);
-    if (existing) {
-      existing.limit = limit;
-      existing.custom = custom;
+    const existing = state.draft[kind].findIndex((it) => normalizeName(it.name) === name);
+    const row = {
+      name,
+      custom: parsePositive(addLimit.value) > 0,
+      limitValue: parsePositive(addLimit.value) > 0 ? fmtGiB(parsePositive(addLimit.value)) : '',
+    };
+    if (existing >= 0) {
+      state.draft[kind][existing] = row;
     } else {
-      state.draft[kind].push({ name, limit, custom });
+      state.draft[kind].push(row);
     }
-    renderEditors();
-  });
-  addName.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') addBtn.click();
-  });
-  addLimit.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') addBtn.click();
+    renderAll();
   });
 
-  add.appendChild(addName);
-  add.appendChild(addLimit);
-  add.appendChild(addBtn);
-  box.appendChild(add);
+  function updateAddState() {
+    const name = normalizeName(addName.value);
+    addState.className = 'row-state ' + (name ? 'ok' : '');
+    addState.textContent = name ? '✓' : '';
+  }
+  addName.addEventListener('input', updateAddState);
+  addName.addEventListener('keydown', (e) => { if (e.key === 'Enter') addBtn.click(); });
+  addLimit.addEventListener('keydown', (e) => { if (e.key === 'Enter') addBtn.click(); });
+
+  addRow.appendChild(addName);
+  addRow.appendChild(addLimit);
+  addRow.appendChild(addState);
+  addRow.appendChild(addBtn);
+  box.appendChild(addRow);
+
+  if (!issues.length) {
+    validationEl.className = 'validation';
+    validationEl.textContent = '当前无校验错误。';
+  } else {
+    validationEl.className = 'validation error';
+    validationEl.textContent = issues[0].message;
+  }
 }
 
-function renderEditors() {
-  renderBox('commands');
-  renderBox('groups');
-}
-
-function renderLists() {
-  const cmdMap = state.effectiveLimits.commands || {};
-  const grpMap = state.effectiveLimits.groups || {};
-  document.getElementById('effectiveCommands').textContent =
-    (state.effective.commands || []).map((n) => n + '  (' + fmtGiB(cmdMap[n] || state.activeLimits.command) + 'GiB)').join('\n');
-  document.getElementById('effectiveGroups').textContent =
-    (state.effective.groups || []).map((n) => n + '  (' + fmtGiB(grpMap[n] || state.activeLimits.group) + 'GiB)').join('\n');
-  document.getElementById('defaultCommands').textContent = (state.defaults.commands || []).join('\n');
-  document.getElementById('defaultGroups').textContent = (state.defaults.groups || []).join('\n');
+function renderAll() {
+  summarizeLines('effectiveCommands', 'effectiveCommandCount', state.effective.commands, state.effectiveLimits.commands, state.activeLimits.command);
+  summarizeLines('effectiveGroups', 'effectiveGroupCount', state.effective.groups, state.effectiveLimits.groups, state.activeLimits.group);
+  renderDefaults('defaultCommands', state.defaults.commands);
+  renderDefaults('defaultGroups', state.defaults.groups);
+  renderEditor('commands');
+  renderEditor('groups');
+  updateDirtyState();
 }
 
 function setFromRuleState(data) {
@@ -611,63 +1030,57 @@ function setFromRuleState(data) {
   state.defaults.groups = normalizeNameList(data.defaultGroups || []);
   state.effective.commands = normalizeNameList(data.effectiveCommands || []);
   state.effective.groups = normalizeNameList(data.effectiveGroups || []);
-
   state.baseLimits.command = parsePositive(data.baseCommandLimitGiB) || parsePositive(data.commandLimitGiB) || 2;
   state.baseLimits.group = parsePositive(data.baseGroupLimitGiB) || parsePositive(data.groupLimitGiB) || 6;
   state.activeLimits.command = parsePositive(data.commandLimitGiB) || state.baseLimits.command;
   state.activeLimits.group = parsePositive(data.groupLimitGiB) || state.baseLimits.group;
   state.globalLimits.command = state.activeLimits.command;
   state.globalLimits.group = state.activeLimits.group;
-
   state.effectiveLimits.commands = data.commandLimitsGiB || {};
   state.effectiveLimits.groups = data.groupLimitsGiB || {};
-  state.draft.commands = itemsFromNames(state.effective.commands, state.effectiveLimits.commands, state.globalLimits.command);
-  state.draft.groups = itemsFromNames(state.effective.groups, state.effectiveLimits.groups, state.globalLimits.group);
-
+  state.draft.commands = itemsFromNames(state.effective.commands, state.effectiveLimits.commands, state.globalLimits.command).map(makeDraftRow);
+  state.draft.groups = itemsFromNames(state.effective.groups, state.effectiveLimits.groups, state.globalLimits.group).map(makeDraftRow);
   document.getElementById('globalCommandLimit').value = fmtGiB(state.globalLimits.command);
   document.getElementById('globalGroupLimit').value = fmtGiB(state.globalLimits.group);
-  document.getElementById('baseLimitsHint').innerHTML =
+  document.getElementById('baseLimitsHint').textContent =
     '环境默认上限: 命令 ' + fmtGiB(state.baseLimits.command) + 'GiB / 程序组 ' + fmtGiB(state.baseLimits.group) +
-    'GiB。若与此不同，保存后将写入 rules.json 的 limits override。';
-  renderLists();
-  renderEditors();
+    'GiB。输入不同值后保存，将写入 rules.json 的 limits override。';
   document.getElementById('meta').textContent = '规则文件: ' + (data.configPath || '(not set)');
+  state.restoring = false;
+  renderAll();
 }
 
 function toSet(arr) {
   return new Set(normalizeNameList(arr));
 }
 
-function computePatchFromDraft() {
-  const globalCommand = parsePositive(document.getElementById('globalCommandLimit').value) || state.baseLimits.command;
-  const globalGroup = parsePositive(document.getElementById('globalGroupLimit').value) || state.baseLimits.group;
-
-  const targetCommands = normalizeItems(state.draft.commands, globalCommand);
-  const targetGroups = normalizeItems(state.draft.groups, globalGroup);
+function computePatch(globalCommand, globalGroup) {
+  const targetCommands = normalizeItems(state.draft.commands.map((it) => ({
+    name: it.name,
+    custom: parsePositive(it.limitValue) > 0,
+    limit: parsePositive(it.limitValue) > 0 ? parsePositive(it.limitValue) : globalCommand,
+  })), globalCommand);
+  const targetGroups = normalizeItems(state.draft.groups.map((it) => ({
+    name: it.name,
+    custom: parsePositive(it.limitValue) > 0,
+    limit: parsePositive(it.limitValue) > 0 ? parsePositive(it.limitValue) : globalGroup,
+  })), globalGroup);
 
   const targetCommandNames = targetCommands.map((x) => x.name);
   const targetGroupNames = targetGroups.map((x) => x.name);
-  const defaultCommands = state.defaults.commands;
-  const defaultGroups = state.defaults.groups;
-
+  const defaultCommandSet = toSet(state.defaults.commands);
+  const defaultGroupSet = toSet(state.defaults.groups);
   const targetCommandSet = toSet(targetCommandNames);
   const targetGroupSet = toSet(targetGroupNames);
-  const defaultCommandSet = toSet(defaultCommands);
-  const defaultGroupSet = toSet(defaultGroups);
 
   const cmdLimitsGiB = {};
-  for (const it of targetCommands) {
-    if (it.custom && Math.abs(it.limit - globalCommand) > EPS) {
-      cmdLimitsGiB[it.name] = roundGiB(it.limit);
-    }
-  }
-
+  targetCommands.forEach((it) => {
+    if (it.custom && Math.abs(it.limit - globalCommand) > EPS) cmdLimitsGiB[it.name] = roundGiB(it.limit);
+  });
   const grpLimitsGiB = {};
-  for (const it of targetGroups) {
-    if (it.custom && Math.abs(it.limit - globalGroup) > EPS) {
-      grpLimitsGiB[it.name] = roundGiB(it.limit);
-    }
-  }
+  targetGroups.forEach((it) => {
+    if (it.custom && Math.abs(it.limit - globalGroup) > EPS) grpLimitsGiB[it.name] = roundGiB(it.limit);
+  });
 
   return {
     limits: {
@@ -676,81 +1089,100 @@ function computePatchFromDraft() {
     },
     commands: {
       add: targetCommandNames.filter((v) => !defaultCommandSet.has(v)),
-      remove: defaultCommands.filter((v) => !targetCommandSet.has(v)),
+      remove: state.defaults.commands.filter((v) => !targetCommandSet.has(v)),
       limitsGiB: cmdLimitsGiB,
     },
     groups: {
       add: targetGroupNames.filter((v) => !defaultGroupSet.has(v)),
-      remove: defaultGroups.filter((v) => !targetGroupSet.has(v)),
+      remove: state.defaults.groups.filter((v) => !targetGroupSet.has(v)),
       limitsGiB: grpLimitsGiB,
     },
   };
 }
 
-async function loadRules() {
-  const res = await fetch('/api/rules', { cache: 'no-store' });
-  if (!res.ok) {
-    throw new Error(await res.text());
-  }
-  const data = await res.json();
-  setFromRuleState(data);
+function computePatchFromDraft() {
+  const globalCommand = parsePositive(document.getElementById('globalCommandLimit').value) || state.baseLimits.command;
+  const globalGroup = parsePositive(document.getElementById('globalGroupLimit').value) || state.baseLimits.group;
+  return computePatch(globalCommand, globalGroup);
 }
 
-async function savePatch(patch, okText) {
+function computePatchFromEffective() {
+  return {
+    limits: {
+      commandGiB: Math.abs(state.activeLimits.command - state.baseLimits.command) > EPS ? roundGiB(state.activeLimits.command) : 0,
+      groupGiB: Math.abs(state.activeLimits.group - state.baseLimits.group) > EPS ? roundGiB(state.activeLimits.group) : 0,
+    },
+    commands: {
+      add: state.effective.commands.filter((v) => !toSet(state.defaults.commands).has(v)),
+      remove: state.defaults.commands.filter((v) => !toSet(state.effective.commands).has(v)),
+      limitsGiB: Object.assign({}, state.effectiveLimits.commands || {}),
+    },
+    groups: {
+      add: state.effective.groups.filter((v) => !toSet(state.defaults.groups).has(v)),
+      remove: state.defaults.groups.filter((v) => !toSet(state.effective.groups).has(v)),
+      limitsGiB: Object.assign({}, state.effectiveLimits.groups || {}),
+    },
+  };
+}
+
+async function loadRules(message) {
+  const res = await fetch('/api/rules', { cache: 'no-store' });
+  if (!res.ok) throw new Error(await res.text());
+  const data = await res.json();
+  setFromRuleState(data);
+  if (message) {
+    updateStatus('saved', message, '页面已刷新为当前正在生效的规则。');
+  }
+}
+
+async function savePatch(patch, okTitle, okNote) {
+  if (hasValidationErrors()) {
+    updateStatus('error', '存在未提交更改', '请先修正重复名称或非法上限，然后再保存。');
+    return;
+  }
   const res = await fetch('/api/rules', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),
   });
   if (!res.ok) {
-    document.getElementById('status').textContent = '保存失败: ' + await res.text();
+    updateStatus('error', '保存失败', await res.text());
     return;
   }
   const data = await res.json();
   setFromRuleState(data);
-  document.getElementById('status').innerHTML =
-    '<span class="oktext">' + okText + '</span>，已热加载生效: ' + new Date().toLocaleTimeString();
+  updateStatus('saved', okTitle, okNote);
+}
+
+function applyGlobalDraftLimits() {
+  state.globalLimits.command = parsePositive(document.getElementById('globalCommandLimit').value) || state.baseLimits.command;
+  state.globalLimits.group = parsePositive(document.getElementById('globalGroupLimit').value) || state.baseLimits.group;
+  renderAll();
 }
 
 document.getElementById('saveBtn').addEventListener('click', async () => {
-  const patch = computePatchFromDraft();
-  await savePatch(patch, '规则已保存');
+  await savePatch(computePatchFromDraft(), '所有更改已保存', '保存成功，规则已热加载生效。');
 });
 
-function applyGlobalDraftLimits() {
-  const gc = parsePositive(document.getElementById('globalCommandLimit').value) || state.baseLimits.command;
-  const gg = parsePositive(document.getElementById('globalGroupLimit').value) || state.baseLimits.group;
-  state.globalLimits.command = gc;
-  state.globalLimits.group = gg;
-  state.draft.commands.forEach((it) => {
-    if (!it.custom) it.limit = gc;
-  });
-  state.draft.groups.forEach((it) => {
-    if (!it.custom) it.limit = gg;
-  });
-  renderEditors();
-}
-
-document.getElementById('globalCommandLimit').addEventListener('input', applyGlobalDraftLimits);
-document.getElementById('globalGroupLimit').addEventListener('input', applyGlobalDraftLimits);
-
 document.getElementById('reloadBtn').addEventListener('click', async () => {
-  await loadRules();
-  document.getElementById('status').innerHTML =
-    '<span class="oktext">已重新加载当前生效规则</span>: ' + new Date().toLocaleTimeString();
+  await loadRules('所有更改已保存');
 });
 
 document.getElementById('restoreBtn').addEventListener('click', async () => {
+  state.restoring = true;
   const patch = {
     limits: { commandGiB: 0, groupGiB: 0 },
     commands: { add: [], remove: [], limitsGiB: {} },
     groups: { add: [], remove: [], limitsGiB: {} },
   };
-  await savePatch(patch, '已恢复默认规则');
+  await savePatch(patch, '已恢复默认并生效', '页面内容已切回默认规则并立即生效。');
 });
 
-loadRules().catch((e) => {
-  document.getElementById('status').textContent = '加载失败: ' + e;
+document.getElementById('globalCommandLimit').addEventListener('input', applyGlobalDraftLimits);
+document.getElementById('globalGroupLimit').addEventListener('input', applyGlobalDraftLimits);
+
+loadRules('所有更改已保存').catch((e) => {
+  updateStatus('error', '加载失败', String(e));
 });
 </script>
 </body>
